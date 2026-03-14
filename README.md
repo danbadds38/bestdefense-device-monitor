@@ -171,7 +171,7 @@ Full field-by-field documentation → [docs/DATA_COLLECTED.md](docs/DATA_COLLECT
 
 ## ⚡  Installation
 
-### <img src="https://cdn.simpleicons.org/windows11/0078D6" height="18" align="center" alt="Windows" />&nbsp; Windows
+### <img src="https://cdn-icons-png.flaticon.com/512/732/732225.png" height="18" align="center" alt="Windows" />&nbsp; Windows
 
 > **Requirements:** Windows 10 / 11 &nbsp;·&nbsp; Administrator privileges
 
