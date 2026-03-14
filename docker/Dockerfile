@@ -76,5 +76,5 @@ RUN GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/collector/... &
 # The actual fpm invocations run at container start time (see docker-compose.yml).
 FROM build-env AS package-base
 
-RUN apk add --no-cache ruby ruby-dev build-base rpm && \
+RUN apk add --no-cache ruby ruby-dev build-base rpm tar && \
     gem install fpm --no-document
