@@ -122,14 +122,14 @@ services:
           --architecture amd64 --description "BestDefense device compliance monitor" \
           --maintainer "BestDefense <support@bestdefense.io>" --url "https://bestdefense.io" \
           --license "Proprietary" --prefix /usr/local/bin \
-          /out/bestdefense-device-monitor-linux-amd64=bestdefense-device-monitor \
-          -p /out/bestdefense-device-monitor_amd64.deb
+          -p /out/bestdefense-device-monitor_amd64.deb \
+          /out/bestdefense-device-monitor-linux-amd64=bestdefense-device-monitor
         fpm -s dir -t rpm --name bestdefense-device-monitor --version "$$VER" \
           --architecture x86_64 --description "BestDefense device compliance monitor" \
           --maintainer "BestDefense <support@bestdefense.io>" --url "https://bestdefense.io" \
           --license "Proprietary" --prefix /usr/local/bin \
-          /out/bestdefense-device-monitor-linux-amd64=bestdefense-device-monitor \
-          -p /out/bestdefense-device-monitor.x86_64.rpm
+          -p /out/bestdefense-device-monitor.x86_64.rpm \
+          /out/bestdefense-device-monitor-linux-amd64=bestdefense-device-monitor
         echo "Packages:"; ls -lh /out/*.deb /out/*.rpm
 
   # ── test ───────────────────────────────────────────────────────────────────
