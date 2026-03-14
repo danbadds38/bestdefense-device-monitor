@@ -133,11 +133,14 @@ services:
         echo "Packages:"; ls -lh /out/*.deb /out/*.rpm
 
   # ── test ───────────────────────────────────────────────────────────────────
+  # Tests run during `docker build` (RUN go test ... layers).
+  # The container exits immediately — all work is done by image build time.
   # Usage: docker compose -f docker/docker-compose.yml run --rm test
   test:
     build:
       <<: *build-args
       target: test
+    command: ["echo", "Tests passed."]
 
   # ── vet ────────────────────────────────────────────────────────────────────
   # Usage: docker compose -f docker/docker-compose.yml run --rm vet
@@ -145,6 +148,7 @@ services:
     build:
       <<: *build-args
       target: vet
+    command: ["echo", "vet: windows passed."]
 
   # ── vet-all ─────────────────────────────────────────────────────────────────
   # Usage: docker compose -f docker/docker-compose.yml run --rm vet-all
@@ -152,6 +156,7 @@ services:
     build:
       <<: *build-args
       target: vet-all
+    command: ["echo", "vet: all platforms passed."]
 
   # ── tidy ───────────────────────────────────────────────────────────────────
   # Usage: docker compose -f docker/docker-compose.yml run --rm tidy

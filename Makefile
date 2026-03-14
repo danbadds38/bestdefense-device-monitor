@@ -3,7 +3,7 @@
 #
 # See docker/README.md for details.
 
-.PHONY: all build test vet tidy clean shell help
+.PHONY: all build build-all test vet tidy clean shell help
 
-all build test vet tidy clean shell help:
+all build build-all test vet tidy clean shell help:
 	$(MAKE) -f docker/Makefile $@
