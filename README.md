@@ -26,7 +26,7 @@
 
 Zero manual pentests. Zero waiting. Continuous, verified visibility across your entire fleet.
 
-> **Full transparency.** Read the source. Run `check` to see the exact JSON before anything is sent. Every field is documented. Nothing is hidden.
+> **Full transparency.** Read the source. Run `check` to see the exact JSON before anything is sent. Every field is documented. Nothing is hidden. See [Example](example/collection.json).
 
 ---
 
