@@ -151,7 +151,7 @@ Inspect the output. Read the source. Check [docs/DATA_COLLECTED.md](docs/DATA_CO
 
 Scoped entirely to **security configuration** — not behavior, content, or activity.
 
-| Security Check | <img src="https://cdn.simpleicons.org/windows11/0078D6" height="14" alt="Windows" /> Windows | <img src="https://cdn.simpleicons.org/apple/aaaaaa" height="14" alt="macOS" /> macOS | <img src="https://cdn.simpleicons.org/linux/FCC624" height="14" alt="Linux" /> Linux |
+| Security Check | <img src="https://cdn-icons-png.flaticon.com/512/732/732225.png" height="14" alt="Windows" /> Windows | <img src="https://cdn.simpleicons.org/apple/aaaaaa" height="14" alt="macOS" /> macOS | <img src="https://cdn.simpleicons.org/linux/FCC624" height="14" alt="Linux" /> Linux |
 |:---|:---|:---|:---|
 | **Disk Encryption** | BitLocker status per volume | FileVault status | LUKS / dm-crypt detection |
 | **Antivirus** | Windows Defender + definition age | XProtect version + installed AV apps | CrowdStrike · SentinelOne · Carbon Black · ClamAV + 5 others |
