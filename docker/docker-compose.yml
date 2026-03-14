@@ -26,7 +26,7 @@ services:
       target: build-env
       args: *version-build-args
     volumes: *dist-volume
-    command: ["sh", "-c", "GOOS=windows GOARCH=amd64 go build -ldflags=\"-s -w -H windowsgui -X main.Version=$$VERSION -X main.BuildCommit=$$GIT_COMMIT -X main.BuildDate=$$BUILD_DATE\" -o /out/bestdefense-device-monitor-windows-amd64.exe ./cmd/bestdefense-device-monitor && echo Built: && ls -lh /out/bestdefense-device-monitor-windows-amd64.exe"]
+    command: ["sh", "-c", "GOOS=windows GOARCH=amd64 go build -ldflags=\"-s -w -X main.Version=$$VERSION -X main.BuildCommit=$$GIT_COMMIT -X main.BuildDate=$$BUILD_DATE\" -o /out/bestdefense-device-monitor-windows-amd64.exe ./cmd/bestdefense-device-monitor && echo Built: && ls -lh /out/bestdefense-device-monitor-windows-amd64.exe"]
 
   # ── build-windows ──────────────────────────────────────────────────────────
   # Usage: docker compose -f docker/docker-compose.yml run --rm build-windows
@@ -36,7 +36,7 @@ services:
       target: build-env
       args: *version-build-args
     volumes: *dist-volume
-    command: ["sh", "-c", "GOOS=windows GOARCH=amd64 go build -ldflags=\"-s -w -H windowsgui -X main.Version=$$VERSION -X main.BuildCommit=$$GIT_COMMIT -X main.BuildDate=$$BUILD_DATE\" -o /out/bestdefense-device-monitor-windows-amd64.exe ./cmd/bestdefense-device-monitor && ls -lh /out/bestdefense-device-monitor-windows-amd64.exe"]
+    command: ["sh", "-c", "GOOS=windows GOARCH=amd64 go build -ldflags=\"-s -w -X main.Version=$$VERSION -X main.BuildCommit=$$GIT_COMMIT -X main.BuildDate=$$BUILD_DATE\" -o /out/bestdefense-device-monitor-windows-amd64.exe ./cmd/bestdefense-device-monitor && ls -lh /out/bestdefense-device-monitor-windows-amd64.exe"]
 
   # ── build-darwin-amd64 ─────────────────────────────────────────────────────
   # Usage: docker compose -f docker/docker-compose.yml run --rm build-darwin-amd64
@@ -93,7 +93,7 @@ services:
       - |
         set -e
         LF="-s -w -X main.Version=$$VERSION -X main.BuildCommit=$$GIT_COMMIT -X main.BuildDate=$$BUILD_DATE"
-        GOOS=windows GOARCH=amd64 go build -ldflags="$$LF -H windowsgui" -o /out/bestdefense-device-monitor-windows-amd64.exe ./cmd/bestdefense-device-monitor
+        GOOS=windows GOARCH=amd64 go build -ldflags="$$LF" -o /out/bestdefense-device-monitor-windows-amd64.exe ./cmd/bestdefense-device-monitor
         GOOS=darwin  GOARCH=amd64 go build -ldflags="$$LF" -o /out/bestdefense-device-monitor-darwin-amd64 ./cmd/bestdefense-device-monitor
         GOOS=darwin  GOARCH=arm64 go build -ldflags="$$LF" -o /out/bestdefense-device-monitor-darwin-arm64 ./cmd/bestdefense-device-monitor
         GOOS=linux   GOARCH=amd64 go build -ldflags="$$LF" -o /out/bestdefense-device-monitor-linux-amd64 ./cmd/bestdefense-device-monitor

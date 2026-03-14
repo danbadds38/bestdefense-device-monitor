@@ -1,0 +1,848 @@
+{
+  "schema_version": "1",
+  "registration_key": "NOT_CONFIGURED",
+  "agent_version": "",
+  "collected_at": "2026-03-14T09:48:00.9036745Z",
+  "platform": "windows",
+  "device_identity": {
+    "hostname": "CORP-WORKSTATION-7742",
+    "mac_addresses": [
+      "3c:22:fb:a1:d4:09",
+      "e2:44:8b:11:2f:7c",
+      "e0:44:8b:11:2f:7c",
+      "e0:44:8b:11:2f:7c",
+      "04:18:d6:ab:32:5e",
+      "00:15:5d:01:07:00",
+      "00:15:5d:93:3f:88"
+    ],
+    "serial_number": "System Serial Number",
+    "hardware_uuid": "A3C9E1F2-7B4D-4E8A-92F1-1D5C8B3A6E04",
+    "computer_name": "CORP-WORKSTATION-7742",
+    "domain": "WORKGROUP"
+  },
+  "os": {
+    "name": "Windows 10 Pro",
+    "version": "10.0.26200",
+    "build_number": "26200",
+    "display_version": "25H2",
+    "architecture": "x86_64",
+    "install_date": "2025-02-11T09:39:29Z",
+    "registered_owner": "j.smith@example-corp.com"
+  },
+  "hardware": {
+    "cpu_name": "Intel(R) Core(TM) i9-10980XE CPU @ 3.00GHz",
+    "cpu_cores": 18,
+    "cpu_logical_processors": 36,
+    "ram_total_bytes": 3263841168351232,
+    "disks": [
+      {
+        "device_id": "\\\\.\\PHYSICALDRIVE2",
+        "model": "Generic MassStorageClass USB Device",
+        "size_bytes": 0,
+        "media_type": "",
+        "interface_type": "USB"
+      },
+      {
+        "device_id": "\\\\.\\PHYSICALDRIVE0",
+        "model": "Samsung SSD 980 PRO 2TB",
+        "size_bytes": 2000396321280,
+        "media_type": "HDD",
+        "interface_type": "SCSI"
+      },
+      {
+        "device_id": "\\\\.\\PHYSICALDRIVE1",
+        "model": "Samsung SSD 990 PRO 2TB",
+        "size_bytes": 2000396321280,
+        "media_type": "HDD",
+        "interface_type": "SCSI"
+      }
+    ]
+  },
+  "disk_encryption": {
+    "drives": null,
+    "collection_error": "connecting to BitLocker WMI namespace (requires elevation): Exception occurred. (Access denied )"
+  },
+  "antivirus": {
+    "windows_defender_enabled": true,
+    "realtime_protection_enabled": true,
+    "antispyware_enabled": true,
+    "behavior_monitor_enabled": true,
+    "on_access_protection_enabled": true,
+    "definition_version": "1.445.513.0",
+    "definition_date": "2026-03-13T05:11:18Z",
+    "am_service_enabled": true,
+    "product_status": "up_to_date"
+  },
+  "firewall": {
+    "profiles": {
+      "domain": {
+        "enabled": false,
+        "default_inbound_action": "block",
+        "default_outbound_action": "allow"
+      },
+      "private": {
+        "enabled": false,
+        "default_inbound_action": "block",
+        "default_outbound_action": "allow"
+      },
+      "public": {
+        "enabled": false,
+        "default_inbound_action": "block",
+        "default_outbound_action": "allow"
+      }
+    }
+  },
+  "screen_lock": {
+    "screensaver_enabled": true,
+    "screensaver_timeout_seconds": 0,
+    "screensaver_requires_password": false,
+    "lock_on_sleep": false
+  },
+  "software_update": {
+    "automatic_updates_enabled": false,
+    "au_option": "",
+    "pending_reboot": true
+  },
+  "installed_applications": {
+    "applications": [
+      {
+        "name": "Docker Desktop",
+        "version": "4.60.1",
+        "publisher": "Docker Inc.",
+        "install_location": "C:\\Program Files\\Docker\\Docker",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Netmarble launcher 1.3.2",
+        "version": "1.3.2-rc.54435",
+        "publisher": "Netmarble corporation",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Git",
+        "version": "2.45.1",
+        "publisher": "The Git Development Community",
+        "install_date": "20250512",
+        "install_location": "C:\\Program Files\\Git\\",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Mozilla Firefox (x64 en-US)",
+        "version": "148.0.2",
+        "publisher": "Mozilla",
+        "install_location": "C:\\Program Files\\Mozilla Firefox",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Mozilla Maintenance Service",
+        "version": "134.0",
+        "publisher": "Mozilla",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Notepad++ (64-bit x64)",
+        "version": "8.7.5",
+        "publisher": "Notepad++ Team",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Microsoft 365 - en-us",
+        "version": "16.0.19725.20152",
+        "publisher": "Microsoft Corporation",
+        "install_location": "C:\\Program Files\\Microsoft Office",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Microsoft OneDrive",
+        "version": "26.026.0209.0004",
+        "publisher": "Microsoft Corporation",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Razer Axon",
+        "version": "2.6.2.0",
+        "publisher": "Razer Inc.",
+        "install_date": "20260130",
+        "install_location": "C:\\Program Files (x86)\\Razer\\Razer Axon\\",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Razer Cortex",
+        "version": "11.6.2.2",
+        "publisher": "Razer Inc.",
+        "install_date": "20260130",
+        "install_location": "C:\\Program Files (x86)\\Razer\\Razer Cortex\\",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Solo Leveling:ARISE",
+        "install_location": "C:\\Program Files\\Games\\Netmarble\\Solo Leveling - Arise\\Netmarble Game\\sololv",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Destiny 2",
+        "publisher": "Bungie",
+        "install_location": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Destiny 2",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Idle Clans",
+        "publisher": "Isam Games",
+        "install_location": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Idle Clans",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Wallpaper Engine",
+        "publisher": "Wallpaper Engine Team",
+        "install_location": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\wallpaper_engine",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "ROG Live Service",
+        "version": "3.4.12.0",
+        "publisher": "ASUSTek COMPUTER INC.",
+        "install_date": "20260202",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "AniMe Matrix MB EN",
+        "version": "1.0.1",
+        "publisher": "ASUS",
+        "install_date": "20250105",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "ROGFontInstaller",
+        "version": "1.0.0",
+        "publisher": "ASUS",
+        "install_date": "20250105",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Microsoft Visual Studio Installer",
+        "version": "4.0.2168.39045",
+        "publisher": "Microsoft Corporation",
+        "install_date": "20251224",
+        "install_location": "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\"",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Vanta Device Monitor",
+        "version": "2.16.1",
+        "publisher": "Vanta Inc.",
+        "install_date": "20260314",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Microsoft GameInput",
+        "version": "3.2.138.0",
+        "publisher": "Microsoft Corporation",
+        "install_date": "20260305",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Microsoft Teams Meeting Add-in for Microsoft Office",
+        "version": "1.25.28902",
+        "publisher": "Microsoft",
+        "install_date": "20251219",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Adobe Acrobat (64-bit)",
+        "version": "25.001.21288",
+        "publisher": "Adobe",
+        "install_date": "20260311",
+        "install_location": "C:\\Program Files\\Adobe\\Acrobat DC\\",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Webex",
+        "version": "43.10.0.28042",
+        "publisher": "Cisco Systems, Inc",
+        "install_date": "20260121",
+        "install_location": "C:\\Users\\jsmith\\AppData\\Local\\Programs\\Cisco Spark\\",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "NVIDIA Graphics Driver 566.36",
+        "version": "566.36",
+        "publisher": "NVIDIA Corporation",
+        "install_date": "20250211",
+        "install_location": "C:\\Program Files\\NVIDIA Corporation\\Installer2\\Display.Driver.{85B8B3DB-CAAF-41C0-ADC3-870A9A5EBF1F}",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "NVIDIA app 11.0.1.189",
+        "version": "11.0.1.189",
+        "publisher": "NVIDIA Corporation",
+        "install_date": "20250105",
+        "install_location": "C:\\Program Files\\NVIDIA Corporation\\Installer2\\Display.NvApp.{AD88314D-A8F2-4703-BFB1-E12B3233A4D2}",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "NVIDIA PhysX System Software 9.23.1019",
+        "version": "9.23.1019",
+        "publisher": "NVIDIA Corporation",
+        "install_date": "20250105",
+        "install_location": "C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "NVIDIA FrameView SDK 1.4.10624.35034762",
+        "version": "1.4.10624.35034762",
+        "publisher": "NVIDIA Corporation",
+        "install_date": "20250105",
+        "install_location": "C:\\Program Files\\NVIDIA Corporation\\FrameViewSDK",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "NVIDIA HD Audio Driver 1.4.2.6",
+        "version": "1.4.2.6",
+        "publisher": "NVIDIA Corporation",
+        "install_date": "20250105",
+        "install_location": "C:\\Program Files\\NVIDIA Corporation\\Installer2\\HDAudio.Driver.{3B1AE5F9-4BC8-4F9D-9B66-8ADF736F8C01}",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "AURA lighting effect add-on x64",
+        "version": "0.0.44",
+        "publisher": "ASUSTek COMPUTER INC.",
+        "install_date": "20250105",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Microsoft Update Health Tools",
+        "version": "5.72.0.0",
+        "publisher": "Microsoft Corporation",
+        "install_date": "20250106",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "ARMOURY CRATE Lite Service",
+        "version": "5.9.13",
+        "publisher": "ASUS",
+        "install_date": "20250105",
+        "source": "HKLM_x64"
+      },
+      {
+        "name": "Visual Studio Community 2026",
+        "version": "18.1.1",
+        "publisher": "Microsoft Corporation",
+        "install_date": "20251224",
+        "install_location": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Adobe Creative Cloud",
+        "version": "6.8.1.865",
+        "publisher": "Adobe Inc.",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Sound Blaster AE-Series Driver",
+        "version": "1.0.01.06",
+        "publisher": "Creative Technology Ltd.",
+        "install_date": "20250105",
+        "install_location": "C:\\Program Files (x86)\\Creative\\Sound Blaster AE-Series Driver\\",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Creative ALchemy",
+        "version": "1.45",
+        "publisher": "Creative Technology Limited",
+        "install_location": "C:\\Program Files (x86)\\Creative\\ALchemy",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Creative App version 1.19.05.00",
+        "version": "1.19.05.00",
+        "publisher": "Creative Technology Ltd.",
+        "install_date": "20250105",
+        "install_location": "C:\\Program Files (x86)\\Creative\\Creative App\\",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Dolby Digital Live Pack version 4.02.00",
+        "version": "4.02.00",
+        "publisher": "Creative Technology Ltd.",
+        "install_date": "20250105",
+        "install_location": "C:\\Program Files (x86)\\Creative\\Dolby Digital Live Pack\\",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "DTS Connect Pack version 3.02.01",
+        "version": "3.02.01",
+        "publisher": "Creative Technology Ltd.",
+        "install_date": "20250105",
+        "install_location": "C:\\Program Files (x86)\\Creative\\DTS Connect Pack\\",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "FL Cloud Plugins version 1.9.1",
+        "version": "1.9.1",
+        "install_date": "20250124",
+        "install_location": "C:\\Program Files\\FL Cloud Plugins\\",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "FL Studio 2024",
+        "version": "24.2.1.4526",
+        "publisher": "Image-Line",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "FL Studio ASIO",
+        "publisher": "Image-Line",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Google Chrome",
+        "version": "145.0.7632.160",
+        "publisher": "Google LLC",
+        "install_date": "20260305",
+        "install_location": "C:\\Program Files\\Google\\Chrome\\Application",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Host OpenAL",
+        "version": "2.03",
+        "publisher": "Creative Technology Limited",
+        "install_location": "C:\\WINDOWS\\SysWOW64\\",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "GnuWin32: Make-3.81",
+        "version": "3.81",
+        "publisher": "GnuWin32",
+        "install_date": "20250515",
+        "install_location": "C:\\Program Files (x86)\\GnuWin32\\",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Microsoft Edge",
+        "version": "145.0.3800.97",
+        "publisher": "Microsoft Corporation",
+        "install_date": "20260308",
+        "install_location": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Nmap 7.95",
+        "version": "7.95",
+        "publisher": "Nmap Project",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Npcap",
+        "version": "1.79",
+        "publisher": "Nmap Project",
+        "install_location": "C:\\Program Files\\Npcap",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "PyCharm 2025.1.2",
+        "version": "251.26094.141",
+        "publisher": "JetBrains s.r.o.",
+        "install_location": "C:\\Users\\jsmith\\AppData\\Local\\Programs\\PyCharm 2025.1.2",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Razer Chroma",
+        "version": "4.0.652",
+        "publisher": "Razer Inc.",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Razer Synapse",
+        "version": "4.0.652",
+        "publisher": "Razer Inc.",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Sound Blaster Command version 3.4.92.00",
+        "version": "3.4.92.00",
+        "publisher": "Creative Technology Ltd.",
+        "install_date": "20250105",
+        "install_location": "C:\\Program Files (x86)\\Creative\\Sound Blaster Command\\",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Steam",
+        "version": "2.10.91.91",
+        "publisher": "Valve Corporation",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "GameSDK Service",
+        "version": "1.0.5.0",
+        "publisher": "ASUSTek COMPUTER INC.",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Microsoft Visual C++ 2015-2022 Redistributable (x86) - 14.44.35211",
+        "version": "14.44.35211.0",
+        "publisher": "Microsoft Corporation",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "vs_CoreEditorFonts",
+        "version": "17.7.40001",
+        "publisher": "Microsoft Corporation",
+        "install_date": "20251224",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "AURA lighting effect add-on",
+        "version": "0.0.44",
+        "publisher": "ASUSTek COMPUTER INC.",
+        "install_date": "20250105",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Microsoft .NET Runtime - 6.0.16 (x64)",
+        "version": "6.0.16.32323",
+        "publisher": "Microsoft Corporation",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Lightshot-5.5.0.7",
+        "version": "5.5.0.7",
+        "publisher": "Skillbrains",
+        "install_date": "20250128",
+        "install_location": "C:\\Program Files (x86)\\Skillbrains\\lightshot\\",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "ASUS Framework Service",
+        "version": "4.2.0.4",
+        "publisher": "ASUSTeK Computer Inc.",
+        "install_date": "20250105",
+        "install_location": "C:\\Program Files (x86)\\ASUS\\ArmouryDevice",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "AURA Service",
+        "version": "3.07.54",
+        "publisher": "ASUSTeK Computer Inc.",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "ASUS Motherboard",
+        "version": "4.04.03",
+        "publisher": "ASUSTek Computer Inc.",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "PowerToys (Preview) x64",
+        "version": "0.87.1",
+        "publisher": "Microsoft Corporation",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Microsoft Visual C++ 2015-2022 Redistributable (x64) - 14.44.35211",
+        "version": "14.44.35211.0",
+        "publisher": "Microsoft Corporation",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Python Launcher",
+        "version": "3.12.6150.0",
+        "publisher": "Python Software Foundation",
+        "install_date": "20250201",
+        "source": "HKLM_x86"
+      },
+      {
+        "name": "Signal 8.0.0",
+        "version": "8.0.0",
+        "publisher": "Signal Messenger, LLC",
+        "source": "HKCU_x64"
+      },
+      {
+        "name": "Cisco Webex Meetings",
+        "version": "45.6.1",
+        "publisher": "Cisco Webex LLC",
+        "source": "HKCU_x64"
+      },
+      {
+        "name": "Claude",
+        "version": "1.1.6452",
+        "publisher": "Anthropic PBC",
+        "install_date": "20260313",
+        "install_location": "C:\\Users\\jsmith\\AppData\\Local\\AnthropicClaude",
+        "source": "HKCU_x64"
+      },
+      {
+        "name": "Discord",
+        "version": "1.0.9227",
+        "publisher": "Discord Inc.",
+        "install_date": "20252205",
+        "install_location": "C:\\Users\\jsmith\\AppData\\Local\\Discord",
+        "source": "HKCU_x64"
+      },
+      {
+        "name": "GitHub Desktop",
+        "version": "3.5.5",
+        "publisher": "GitHub, Inc.",
+        "install_date": "20260226",
+        "install_location": "C:\\Users\\jsmith\\AppData\\Local\\GitHubDesktop",
+        "source": "HKCU_x64"
+      },
+      {
+        "name": "Android Studio",
+        "version": "Narwhal 2025.1.1 Patch 1",
+        "publisher": "Google",
+        "install_date": "20250717",
+        "install_location": "C:\\Users\\jsmith\\AppData\\Local\\Programs\\Android Studio",
+        "source": "HKCU_x64"
+      },
+      {
+        "name": "CLion",
+        "version": "2025.1.3",
+        "publisher": "JetBrains s.r.o.",
+        "install_date": "20250717",
+        "install_location": "C:\\Users\\jsmith\\AppData\\Local\\Programs\\CLion",
+        "source": "HKCU_x64"
+      },
+      {
+        "name": "IntelliJ IDEA Community Edition",
+        "version": "2025.1.3",
+        "publisher": "JetBrains s.r.o.",
+        "install_date": "20250717",
+        "install_location": "C:\\Users\\jsmith\\AppData\\Local\\Programs\\IntelliJ IDEA Community Edition",
+        "source": "HKCU_x64"
+      },
+      {
+        "name": "IntelliJ IDEA Ultimate",
+        "version": "2025.1.3",
+        "publisher": "JetBrains s.r.o.",
+        "install_date": "20250717",
+        "install_location": "C:\\Users\\jsmith\\AppData\\Local\\Programs\\IntelliJ IDEA Ultimate",
+        "source": "HKCU_x64"
+      },
+      {
+        "name": "PhpStorm",
+        "version": "2025.1.3",
+        "publisher": "JetBrains s.r.o.",
+        "install_date": "20250717",
+        "install_location": "C:\\Users\\jsmith\\AppData\\Local\\Programs\\PhpStorm",
+        "source": "HKCU_x64"
+      },
+      {
+        "name": "PyCharm Community",
+        "version": "2025.1.3.1",
+        "publisher": "JetBrains s.r.o.",
+        "install_date": "20250717",
+        "install_location": "C:\\Users\\jsmith\\AppData\\Local\\Programs\\PyCharm Community",
+        "source": "HKCU_x64"
+      },
+      {
+        "name": "WebStorm",
+        "version": "2025.1.3",
+        "publisher": "JetBrains s.r.o.",
+        "install_date": "20250717",
+        "install_location": "C:\\Users\\jsmith\\AppData\\Local\\Programs\\WebStorm",
+        "source": "HKCU_x64"
+      },
+      {
+        "name": "Postman x86_64 11.61.5",
+        "version": "11.61.5",
+        "publisher": "Postman",
+        "install_date": "20250903",
+        "install_location": "C:\\Users\\jsmith\\AppData\\Local\\Postman",
+        "source": "HKCU_x64"
+      },
+      {
+        "name": "PyCharm",
+        "version": "2025.2.1.1",
+        "publisher": "JetBrains s.r.o.",
+        "install_date": "20250917",
+        "install_location": "C:\\Users\\jsmith\\AppData\\Local\\Programs\\PyCharm 2025.1.2",
+        "source": "HKCU_x64"
+      },
+      {
+        "name": "JetBrains Toolbox",
+        "version": "3.3.1.75249",
+        "publisher": "JetBrains",
+        "source": "HKCU_x64"
+      },
+      {
+        "name": "Vivaldi",
+        "version": "7.8.3925.81",
+        "publisher": "Vivaldi Technologies AS.",
+        "install_date": "20260313",
+        "install_location": "C:\\Users\\jsmith\\AppData\\Local\\Vivaldi\\Application",
+        "source": "HKCU_x64"
+      },
+      {
+        "name": "Zoom Workplace",
+        "version": "6.6.11 (23272)",
+        "publisher": "Zoom Communications, Inc.",
+        "install_location": "C:\\Users\\jsmith\\AppData\\Roaming\\Zoom\\bin",
+        "source": "HKCU_x64"
+      },
+      {
+        "name": "Python 3.12.6 (64-bit)",
+        "version": "3.12.6150.0",
+        "publisher": "Python Software Foundation",
+        "source": "HKCU_x64"
+      },
+      {
+        "name": "Microsoft Visual Studio Code (User)",
+        "version": "1.110.1",
+        "publisher": "Microsoft Corporation",
+        "install_date": "20260312",
+        "install_location": "C:\\Users\\jsmith\\AppData\\Local\\Programs\\Microsoft VS Code\\",
+        "source": "HKCU_x64"
+      }
+    ],
+    "total_count": 83
+  },
+  "local_users": {
+    "accounts": [
+      {
+        "username": "Administrator",
+        "is_admin": true,
+        "is_enabled": false,
+        "is_local": true,
+        "password_required": true,
+        "password_never_expires": true
+      },
+      {
+        "username": "jsmith",
+        "is_admin": true,
+        "is_enabled": true,
+        "is_local": true,
+        "password_required": true,
+        "password_never_expires": true
+      },
+      {
+        "username": "DefaultAccount",
+        "is_admin": false,
+        "is_enabled": false,
+        "is_local": true,
+        "password_required": false,
+        "password_never_expires": true
+      },
+      {
+        "username": "Guest",
+        "is_admin": false,
+        "is_enabled": false,
+        "is_local": true,
+        "password_required": false,
+        "password_never_expires": true
+      },
+      {
+        "username": "WDAGUtilityAccount",
+        "is_admin": false,
+        "is_enabled": false,
+        "is_local": true,
+        "password_required": true,
+        "password_never_expires": false
+      }
+    ]
+  },
+  "password_policy": {
+    "min_password_length": 0,
+    "max_password_age_days": 42,
+    "min_password_age_days": 0,
+    "password_history_count": 0,
+    "complexity_enabled": false,
+    "lockout_threshold": 0,
+    "lockout_duration_minutes": 30,
+    "lockout_observation_window_minutes": 30
+  },
+  "network_interfaces": {
+    "interfaces": [
+      {
+        "name": "Ethernet",
+        "mac_address": "3c:22:fb:a1:d4:09",
+        "ip_addresses": [
+          "fe80::1dea:8c66:c501:702a",
+          "169.254.110.230"
+        ],
+        "is_up": false,
+        "type": "ethernet"
+      },
+      {
+        "name": "Local Area Connection* 9",
+        "mac_address": "e2:44:8b:11:2f:7c",
+        "ip_addresses": [
+          "fe80::ba46:e348:9dce:e840",
+          "169.254.97.52"
+        ],
+        "is_up": false,
+        "type": "ethernet"
+      },
+      {
+        "name": "Local Area Connection* 10",
+        "mac_address": "e0:44:8b:11:2f:7c",
+        "ip_addresses": [
+          "fe80::469:c2e7:1c91:bef8",
+          "169.254.229.238"
+        ],
+        "is_up": false,
+        "type": "ethernet"
+      },
+      {
+        "name": "Wi-Fi",
+        "mac_address": "e0:44:8b:11:2f:7c",
+        "ip_addresses": [
+          "fe80::469:c2e7:1c91:bef8",
+          "10.0.1.47"
+        ],
+        "is_up": true,
+        "type": "wifi"
+      },
+      {
+        "name": "Bluetooth Network Connection",
+        "mac_address": "04:18:d6:ab:32:5e",
+        "ip_addresses": [
+          "fe80::b2a9:8c6b:cd06:fbfb",
+          "169.254.230.146"
+        ],
+        "is_up": false,
+        "type": "ethernet"
+      },
+      {
+        "name": "Loopback Pseudo-Interface 1",
+        "mac_address": "",
+        "ip_addresses": [
+          "::1",
+          "127.0.0.1"
+        ],
+        "is_up": true,
+        "type": "loopback"
+      },
+      {
+        "name": "vEthernet (Default Switch)",
+        "mac_address": "00:15:5d:01:07:00",
+        "ip_addresses": [
+          "fe80::ce89:b37e:c7fe:dc6",
+          "172.17.0.1"
+        ],
+        "is_up": true,
+        "type": "ethernet"
+      },
+      {
+        "name": "vEthernet (WSL (Hyper-V firewall))",
+        "mac_address": "00:15:5d:93:3f:88",
+        "ip_addresses": [
+          "fe80::aadf:d367:7d08:8718",
+          "172.20.176.1"
+        ],
+        "is_up": true,
+        "type": "ethernet"
+      }
+    ]
+  },
+  "system_health": {
+    "last_reboot_time": "2026-02-16T02:42:53Z",
+    "uptime_hours": 631.0870194196945
+  },
+  "check_errors": [
+    {
+      "check": "disk_encryption",
+      "error": "connecting to BitLocker WMI namespace (requires elevation): Exception occurred. (Access denied )"
+    }
+  ]
+}

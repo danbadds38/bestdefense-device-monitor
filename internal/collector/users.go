@@ -75,6 +75,14 @@ func collectLocalUsers() (result reporter.LocalUsersInfo) {
 		// Get the set of admin usernames
 		admins := getAdminUsernames()
 
+		// Well-known OS-managed pseudo-accounts that are not real users.
+		// NetUserEnum returns these as normal accounts despite being system-managed.
+		// systemAccounts := map[string]bool{
+		// 	"wdagutilityaccount": true, // Windows Defender Application Guard sandbox
+		// 	"defaultaccount":     true, // System-managed built-in account
+		// 	"guest":              true, // Built-in guest (disabled by default, not a real user)
+		// }
+
 		stride := unsafe.Sizeof(userInfo1{})
 		for i := uint32(0); i < entriesRead; i++ {
 			ui := (*userInfo1)(unsafe.Add(unsafe.Pointer(bufPtr), uintptr(i)*stride))
@@ -83,6 +91,9 @@ func collectLocalUsers() (result reporter.LocalUsersInfo) {
 			if username == "" {
 				continue
 			}
+			// if systemAccounts[strings.ToLower(username)] {
+			// 	continue
+			// }
 
 			user := reporter.LocalUser{
 				Username:             username,
