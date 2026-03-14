@@ -1,0 +1,75 @@
+name: bestdefense-device-monitor
+
+# Shared build arguments resolved from environment with sensible defaults.
+x-build-args: &build-args
+  context: ..
+  dockerfile: docker/Dockerfile
+
+services:
+
+  # ── build ──────────────────────────────────────────────────────────────────
+  # Cross-compiles bestdefense-device-monitor.exe into ../dist/
+  #
+  # Usage:  docker compose -f docker/docker-compose.yml run --rm build
+  build:
+    build:
+      <<: *build-args
+      target: build
+      args:
+        VERSION: ${VERSION:-dev}
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+        BUILD_DATE: ${BUILD_DATE:-unknown}
+    volumes:
+      - ../dist:/out
+    # The container writes to /out; the volume maps that to ../dist on the host.
+    command: ["sh", "-c", "echo 'Build complete: /out/bestdefense-device-monitor.exe'"]
+
+  # ── test ───────────────────────────────────────────────────────────────────
+  # Runs native tests for platform-agnostic packages and cross-compile checks
+  # for Windows-specific packages.
+  #
+  # Usage:  docker compose -f docker/docker-compose.yml run --rm test
+  test:
+    build:
+      <<: *build-args
+      target: test
+    # No volume needed — tests run inside the container.
+
+  # ── vet ────────────────────────────────────────────────────────────────────
+  # Runs go vet with GOOS=windows across all packages.
+  #
+  # Usage:  docker compose -f docker/docker-compose.yml run --rm vet
+  vet:
+    build:
+      <<: *build-args
+      target: vet
+
+  # ── tidy ───────────────────────────────────────────────────────────────────
+  # Runs go mod tidy and writes updated go.mod / go.sum back to the host.
+  #
+  # Usage:  docker compose -f docker/docker-compose.yml run --rm tidy
+  tidy:
+    build:
+      <<: *build-args
+      target: deps
+    volumes:
+      - ../go.mod:/src/go.mod
+      - ../go.sum:/src/go.sum
+    working_dir: /src
+    command: ["go", "mod", "tidy"]
+
+  # ── shell ──────────────────────────────────────────────────────────────────
+  # Opens an interactive shell inside the build environment.
+  # Useful for debugging build or test failures.
+  #
+  # Usage:  docker compose -f docker/docker-compose.yml run --rm shell
+  shell:
+    build:
+      <<: *build-args
+      target: deps
+    volumes:
+      - ..:/src
+    working_dir: /src
+    entrypoint: ["sh"]
+    stdin_open: true
+    tty: true
