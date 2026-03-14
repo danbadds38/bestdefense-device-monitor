@@ -46,8 +46,8 @@ var (
 func collectLocalUsers() (result reporter.LocalUsersInfo) {
 	err := safeCollect("users", func() error {
 		var (
-			bufPtr    uintptr
-			entriesRead uint32
+			bufPtr       *userInfo1
+			entriesRead  uint32
 			totalEntries uint32
 			resumeHandle uint32
 		)
@@ -67,17 +67,17 @@ func collectLocalUsers() (result reporter.LocalUsersInfo) {
 		if ret != 0 && ret != 0x000000EA { // ERROR_MORE_DATA
 			return fmt.Errorf("NetUserEnum failed: %d", ret)
 		}
-		if bufPtr == 0 {
+		if bufPtr == nil {
 			return nil
 		}
-		defer procNetApiBufferFree.Call(bufPtr)
+		defer procNetApiBufferFree.Call(uintptr(unsafe.Pointer(bufPtr)))
 
 		// Get the set of admin usernames
 		admins := getAdminUsernames()
 
 		stride := unsafe.Sizeof(userInfo1{})
 		for i := uint32(0); i < entriesRead; i++ {
-			ui := (*userInfo1)(unsafe.Pointer(bufPtr + uintptr(i)*stride))
+			ui := (*userInfo1)(unsafe.Add(unsafe.Pointer(bufPtr), uintptr(i)*stride))
 
 			username := windows.UTF16PtrToString(ui.Usri1_name)
 			if username == "" {
@@ -115,7 +115,7 @@ func getAdminUsernames() map[string]bool {
 	}
 
 	var (
-		bufPtr       uintptr
+		bufPtr       *memberInfo3
 		entriesRead  uint32
 		totalEntries uint32
 		resumeHandle uintptr
@@ -134,14 +134,14 @@ func getAdminUsernames() map[string]bool {
 		uintptr(unsafe.Pointer(&resumeHandle)),
 	)
 
-	if ret != 0 || bufPtr == 0 {
+	if ret != 0 || bufPtr == nil {
 		return admins
 	}
-	defer procNetApiBufferFree.Call(bufPtr)
+	defer procNetApiBufferFree.Call(uintptr(unsafe.Pointer(bufPtr)))
 
 	stride := unsafe.Sizeof(memberInfo3{})
 	for i := uint32(0); i < entriesRead; i++ {
-		mi := (*memberInfo3)(unsafe.Pointer(bufPtr + uintptr(i)*stride))
+		mi := (*memberInfo3)(unsafe.Add(unsafe.Pointer(bufPtr), uintptr(i)*stride))
 		full := windows.UTF16PtrToString(mi.Lgrmi3_domainandname)
 		// Strip domain prefix if present (e.g., "DESKTOP\Administrator" → "administrator")
 		if idx := strings.LastIndex(full, `\`); idx >= 0 {

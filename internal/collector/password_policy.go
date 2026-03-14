@@ -37,8 +37,9 @@ var (
 
 func collectPasswordPolicy() (result reporter.PasswordPolicyInfo) {
 	err := safeCollect("password_policy", func() error {
-		// Level 0: basic password policy
-		var buf0 uintptr
+		// Level 0: basic password policy.
+		// Declare as typed pointer so we avoid the uintptr→unsafe.Pointer anti-pattern.
+		var buf0 *userModalsInfo0
 		ret, _, _ := procNetUserModalsGet.Call(
 			0, // local computer
 			0, // level 0
@@ -47,36 +48,34 @@ func collectPasswordPolicy() (result reporter.PasswordPolicyInfo) {
 		if ret != 0 {
 			return fmt.Errorf("NetUserModalsGet level 0 failed: %d", ret)
 		}
-		if buf0 == 0 {
+		if buf0 == nil {
 			return fmt.Errorf("NetUserModalsGet returned nil buffer")
 		}
-		defer procNetApiBufferFree.Call(buf0)
+		defer procNetApiBufferFree.Call(uintptr(unsafe.Pointer(buf0)))
 
-		info0 := (*userModalsInfo0)(unsafe.Pointer(buf0))
-		result.MinPasswordLength = int(info0.Usrmod0_min_passwd_len)
-		result.PasswordHistoryCount = int(info0.Usrmod0_password_hist_len)
+		result.MinPasswordLength = int(buf0.Usrmod0_min_passwd_len)
+		result.PasswordHistoryCount = int(buf0.Usrmod0_password_hist_len)
 
-		if info0.Usrmod0_max_passwd_age == maxPasswordAgeNever {
+		if buf0.Usrmod0_max_passwd_age == maxPasswordAgeNever {
 			result.MaxPasswordAgeDays = 0 // 0 means never expires
 		} else {
-			result.MaxPasswordAgeDays = int(info0.Usrmod0_max_passwd_age / secondsPerDay)
+			result.MaxPasswordAgeDays = int(buf0.Usrmod0_max_passwd_age / secondsPerDay)
 		}
 
-		result.MinPasswordAgeDays = int(info0.Usrmod0_min_passwd_age / secondsPerDay)
+		result.MinPasswordAgeDays = int(buf0.Usrmod0_min_passwd_age / secondsPerDay)
 
 		// Level 3: lockout policy
-		var buf3 uintptr
+		var buf3 *userModalsInfo3
 		ret, _, _ = procNetUserModalsGet.Call(
 			0,
 			3, // level 3
 			uintptr(unsafe.Pointer(&buf3)),
 		)
-		if ret == 0 && buf3 != 0 {
-			defer procNetApiBufferFree.Call(buf3)
-			info3 := (*userModalsInfo3)(unsafe.Pointer(buf3))
-			result.LockoutThreshold = int(info3.Usrmod3_lockout_threshold)
-			result.LockoutDurationMinutes = int(info3.Usrmod3_lockout_duration / secondsPerMinute)
-			result.LockoutObservationWindowMinutes = int(info3.Usrmod3_lockout_observation_window / secondsPerMinute)
+		if ret == 0 && buf3 != nil {
+			defer procNetApiBufferFree.Call(uintptr(unsafe.Pointer(buf3)))
+			result.LockoutThreshold = int(buf3.Usrmod3_lockout_threshold)
+			result.LockoutDurationMinutes = int(buf3.Usrmod3_lockout_duration / secondsPerMinute)
+			result.LockoutObservationWindowMinutes = int(buf3.Usrmod3_lockout_observation_window / secondsPerMinute)
 		}
 
 		// Password complexity is set by secedit/Group Policy and written to the LSA registry key.

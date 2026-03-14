@@ -24,8 +24,8 @@ var auOptionLabels = map[uint64]string{
 	5: "managed",
 }
 
-func collectWindowsUpdate() (result reporter.WindowsUpdateInfo) {
-	err := safeCollect("autoupdate", func() error {
+func collectSoftwareUpdate() (result reporter.SoftwareUpdateInfo) {
+	err := safeCollect("software_update", func() error {
 		// GPO path takes precedence
 		paths := []struct {
 			root registry.Key

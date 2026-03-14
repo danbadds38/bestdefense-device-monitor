@@ -8,9 +8,9 @@ on:
     branches: [main]
 
 jobs:
-  # ── PR checks: fast Ubuntu runner via Docker ───────────────────────────────
-  # Runs vet + cross-compile tests + build on every PR using a Linux container.
-  # Much faster and cheaper than windows-latest for basic correctness checks.
+  # ── CI checks: vet-all + test + build-all via Docker ─────────────────────
+  # Runs on every PR and every tag push.  A single ubuntu-latest runner with
+  # Docker cross-compiles all 5 platform binaries — no per-platform runners needed.
   docker-ci:
     runs-on: ubuntu-latest
     steps:
@@ -18,90 +18,132 @@ jobs:
 
       - name: Set build metadata
         run: |
-          echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+          echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
           echo "GIT_COMMIT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
           echo "BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Vet
-        run: make -f docker/Makefile vet
+      - name: Vet all platforms
+        run: make -f docker/Makefile vet-all
 
-      - name: Test
+      - name: Test (native + cross-compile for all platforms)
         run: make -f docker/Makefile test
 
-      - name: Build .exe
-        run: make -f docker/Makefile build
+      - name: Build all platforms
+        run: make -f docker/Makefile build-all
 
-      - name: Upload artifact (PR preview)
+      - name: Upload PR artifacts
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: bestdefense-device-monitor-pr-${{ github.event.number }}
-          path: dist/bestdefense-device-monitor.exe
+          path: dist/
           retention-days: 7
 
-  # ── Release: Windows runner for full execution tests + signed release ──────
-  # Only runs on version tags. Uses windows-latest so the compiled .exe can
-  # actually be executed for integration smoke-testing.
+  # ── Release: package + publish all artifacts ─────────────────────────────
+  # Only runs on version tags after docker-ci passes.
+  # Produces checksums and a full GitHub Release with all 5 binaries + packages.
   release:
     if: startsWith(github.ref, 'refs/tags/')
     needs: docker-ci
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-go@v5
-        with:
-          go-version: '1.22'
-          cache: true
-
-      - name: Run tests (native Windows execution)
-        run: go test ./...
-
-      - name: Build .exe
+      - name: Set build metadata
         run: |
-          $Version = "${{ github.ref_name }}" -replace '^v', ''
-          .\scripts\build.ps1 -Version $Version
-        shell: pwsh
+          echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          echo "GIT_COMMIT=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "BUILD_DATE=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_ENV
 
-      - name: Compute SHA256
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build all platform binaries
+        run: make -f docker/Makefile build-all
+
+      - name: Build Linux packages (.deb + .rpm)
+        run: make -f docker/Makefile package-linux
+
+      - name: Compute SHA256 checksums
+        working-directory: dist
         run: |
-          $hash = (Get-FileHash dist\bestdefense-device-monitor.exe -Algorithm SHA256).Hash.ToLower()
-          "$hash  bestdefense-device-monitor.exe" | Out-File -Encoding ASCII dist\bestdefense-device-monitor.exe.sha256
-          Write-Host "SHA256: $hash"
-        shell: pwsh
-
-      - name: Upload release artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: bestdefense-device-monitor-windows-amd64
-          path: |
-            dist/bestdefense-device-monitor.exe
-            dist/bestdefense-device-monitor.exe.sha256
+          sha256sum bestdefense-device-monitor-windows-amd64.exe  > bestdefense-device-monitor-windows-amd64.exe.sha256
+          sha256sum bestdefense-device-monitor-darwin-amd64       > bestdefense-device-monitor-darwin-amd64.sha256
+          sha256sum bestdefense-device-monitor-darwin-arm64       > bestdefense-device-monitor-darwin-arm64.sha256
+          sha256sum bestdefense-device-monitor-linux-amd64        > bestdefense-device-monitor-linux-amd64.sha256
+          sha256sum bestdefense-device-monitor-linux-arm64        > bestdefense-device-monitor-linux-arm64.sha256
+          cat *.sha256
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/bestdefense-device-monitor.exe
-            dist/bestdefense-device-monitor.exe.sha256
+            dist/bestdefense-device-monitor-windows-amd64.exe
+            dist/bestdefense-device-monitor-windows-amd64.exe.sha256
+            dist/bestdefense-device-monitor-darwin-amd64
+            dist/bestdefense-device-monitor-darwin-amd64.sha256
+            dist/bestdefense-device-monitor-darwin-arm64
+            dist/bestdefense-device-monitor-darwin-arm64.sha256
+            dist/bestdefense-device-monitor-linux-amd64
+            dist/bestdefense-device-monitor-linux-amd64.sha256
+            dist/bestdefense-device-monitor-linux-arm64
+            dist/bestdefense-device-monitor-linux-arm64.sha256
+            dist/bestdefense-device-monitor_amd64.deb
+            dist/bestdefense-device-monitor.x86_64.rpm
           body: |
             ## BestDefense Device Monitor ${{ github.ref_name }}
 
+            ### Downloads
+
+            | Platform | Binary | SHA256 |
+            |----------|--------|--------|
+            | Windows x64 | `bestdefense-device-monitor-windows-amd64.exe` | `.exe.sha256` |
+            | macOS Intel | `bestdefense-device-monitor-darwin-amd64` | `.sha256` |
+            | macOS Apple Silicon | `bestdefense-device-monitor-darwin-arm64` | `.sha256` |
+            | Linux x64 | `bestdefense-device-monitor-linux-amd64` | `.sha256` |
+            | Linux ARM64 | `bestdefense-device-monitor-linux-arm64` | `.sha256` |
+            | Linux x64 (.deb) | `bestdefense-device-monitor_amd64.deb` | — |
+            | Linux x64 (.rpm) | `bestdefense-device-monitor.x86_64.rpm` | — |
+
             ### Installation
 
-            1. Download `bestdefense-device-monitor.exe`
-            2. Verify the SHA256 hash matches `bestdefense-device-monitor.exe.sha256`
-            3. Run as Administrator:
+            **Windows** (run as Administrator):
             ```
-            .\bestdefense-device-monitor.exe install --key YOUR_REGISTRATION_KEY
+            .\bestdefense-device-monitor-windows-amd64.exe install --key YOUR_REGISTRATION_KEY
+            ```
+
+            **macOS** (run as root):
+            ```
+            chmod +x bestdefense-device-monitor-darwin-arm64
+            sudo ./bestdefense-device-monitor-darwin-arm64 install --key YOUR_REGISTRATION_KEY
+            ```
+
+            **Linux — Debian/Ubuntu**:
+            ```
+            sudo dpkg -i bestdefense-device-monitor_amd64.deb
+            sudo bestdefense-device-monitor install --key YOUR_REGISTRATION_KEY
+            ```
+
+            **Linux — RHEL/Fedora/CentOS**:
+            ```
+            sudo rpm -i bestdefense-device-monitor.x86_64.rpm
+            sudo bestdefense-device-monitor install --key YOUR_REGISTRATION_KEY
+            ```
+
+            **Linux — binary**:
+            ```
+            chmod +x bestdefense-device-monitor-linux-amd64
+            sudo ./bestdefense-device-monitor-linux-amd64 install --key YOUR_REGISTRATION_KEY
             ```
 
             ### Audit what data is collected (before installing)
             ```
-            .\bestdefense-device-monitor.exe check
+            ./bestdefense-device-monitor-<platform> check
             ```
 
             See [DATA_COLLECTED.md](docs/DATA_COLLECTED.md) for a full description of every data point.

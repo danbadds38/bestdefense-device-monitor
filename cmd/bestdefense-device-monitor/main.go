@@ -7,10 +7,8 @@ import (
 
 	"github.com/bestdefense/bestdefense-device-monitor/internal/collector"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/config"
-	"github.com/bestdefense/bestdefense-device-monitor/internal/logging"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/reporter"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/service"
-	"golang.org/x/sys/windows/svc"
 )
 
 // Injected at build time via -ldflags
@@ -20,15 +18,12 @@ var (
 	BuildDate   = "unknown"
 )
 
-func main() {
-	// Detect if we're running as a Windows Service (no console args from SCM)
-	isService, err := svc.IsWindowsService()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to detect service context: %v\n", err)
-		os.Exit(1)
-	}
+// isWindowsService and runAsService are defined in platform-specific files:
+//   main_windows.go  — uses golang.org/x/sys/windows/svc
+//   main_unix.go     — uses signal handling
 
-	if isService {
+func main() {
+	if isWindowsService() {
 		runAsService()
 		return
 	}
@@ -47,7 +42,7 @@ func main() {
 	case "uninstall":
 		cmdUninstall()
 	case "run":
-		// Explicit run (used during development / debugging outside SCM)
+		// Called by launchd/systemd/SCM to run as a daemon
 		runAsService()
 	case "check":
 		cmdCheck()
@@ -58,14 +53,6 @@ func main() {
 	default:
 		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", cmd)
 		printUsage()
-		os.Exit(1)
-	}
-}
-
-func runAsService() {
-	log := logging.NewEventLogger()
-	if err := svc.Run(service.ServiceName, service.New(log)); err != nil {
-		log.Error(fmt.Sprintf("Service failed: %v", err))
 		os.Exit(1)
 	}
 }

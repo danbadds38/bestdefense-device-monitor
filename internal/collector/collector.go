@@ -18,6 +18,7 @@ func Collect(cfg *config.Config) *reporter.DeviceReport {
 		RegistrationKey: cfg.RegistrationKey,
 		AgentVersion:    cfg.AgentVersion,
 		CollectedAt:     time.Now().UTC(),
+		Platform:        "windows",
 	}
 
 	type check struct {
@@ -50,11 +51,11 @@ func Collect(cfg *config.Config) *reporter.DeviceReport {
 				})
 			}
 		}},
-		{"bitlocker", func() {
-			report.BitLocker = collectBitLocker()
-			if report.BitLocker.CollectionError != nil {
+		{"disk_encryption", func() {
+			report.DiskEncryption = collectDiskEncryption()
+			if report.DiskEncryption.CollectionError != nil {
 				report.CheckErrors = append(report.CheckErrors, reporter.CheckError{
-					Check: "bitlocker", Error: *report.BitLocker.CollectionError,
+					Check: "disk_encryption", Error: *report.DiskEncryption.CollectionError,
 				})
 			}
 		}},
@@ -82,11 +83,11 @@ func Collect(cfg *config.Config) *reporter.DeviceReport {
 				})
 			}
 		}},
-		{"windows_update", func() {
-			report.WindowsUpdate = collectWindowsUpdate()
-			if report.WindowsUpdate.CollectionError != nil {
+		{"software_update", func() {
+			report.SoftwareUpdate = collectSoftwareUpdate()
+			if report.SoftwareUpdate.CollectionError != nil {
 				report.CheckErrors = append(report.CheckErrors, reporter.CheckError{
-					Check: "windows_update", Error: *report.WindowsUpdate.CollectionError,
+					Check: "software_update", Error: *report.SoftwareUpdate.CollectionError,
 				})
 			}
 		}},

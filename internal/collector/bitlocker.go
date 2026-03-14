@@ -45,8 +45,8 @@ var bitlockerEncryptionMethod = map[int]string{
 	7: "XtsAes256",
 }
 
-func collectBitLocker() (result reporter.BitLockerInfo) {
-	err := safeCollect("bitlocker", func() error {
+func collectDiskEncryption() (result reporter.DiskEncryptionInfo) {
+	err := safeCollect("disk_encryption", func() error {
 		if err := ole.CoInitializeEx(0, ole.COINIT_MULTITHREADED); err != nil {
 			// may already be init'd
 		}
@@ -85,7 +85,7 @@ func collectBitLocker() (result reporter.BitLockerInfo) {
 			item := v.ToIDispatch()
 			defer item.Release()
 
-			var drive reporter.BitLockerDrive
+			var drive reporter.EncryptedDriveInfo
 
 			if dl, err := oleutil.GetProperty(item, "DriveLetter"); err == nil {
 				drive.DriveLetter = strings.TrimSpace(dl.ToString())

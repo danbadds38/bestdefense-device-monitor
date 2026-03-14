@@ -17,9 +17,10 @@ const (
 	DefaultLogLevel           = "info"
 )
 
-func dataDir() string {
-	return `C:\ProgramData\BestDefense`
-}
+// dataDir() is defined in platform-specific files:
+//   defaults_windows.go  →  C:\ProgramData\BestDefense
+//   defaults_darwin.go   →  /Library/Application Support/BestDefense
+//   defaults_linux.go    →  /var/lib/bestdefense
 
 // Default returns a Config populated with all default values.
 func Default() *Config {
