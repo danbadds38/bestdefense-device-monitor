@@ -10,7 +10,12 @@ import (
 // Config holds all agent configuration. Stored at C:\ProgramData\BestDefense\config.json.
 type Config struct {
 	RegistrationKey    string `json:"registration_key"`
+	// AgentID is assigned by the server on first successful check-in and persisted here.
+	// It is sent as X-Agent-ID on all subsequent requests.
+	AgentID            string `json:"agent_id,omitempty"`
 	APIEndpoint        string `json:"api_endpoint"`
+	CommandsEndpoint   string `json:"commands_endpoint"`
+	TaskResultEndpoint string `json:"task_result_endpoint"`
 	CheckIntervalHours int    `json:"check_interval_hours"`
 	AgentVersion       string `json:"agent_version"`
 	LogLevel           string `json:"log_level"`
@@ -28,7 +33,12 @@ func DataDir() string {
 }
 
 // ConfigPath returns the full path to the config file.
+// The BESTDEFENSE_CONFIG_PATH environment variable overrides the default location
+// (used in tests).
 func ConfigPath() string {
+	if p := os.Getenv("BESTDEFENSE_CONFIG_PATH"); p != "" {
+		return p
+	}
 	return filepath.Join(dataDir(), "config.json")
 }
 
@@ -94,6 +104,12 @@ func (c *Config) validate() error {
 	}
 	if c.APIEndpoint == "" {
 		c.APIEndpoint = DefaultAPIEndpoint
+	}
+	if c.CommandsEndpoint == "" {
+		c.CommandsEndpoint = DefaultCommandsEndpoint
+	}
+	if c.TaskResultEndpoint == "" {
+		c.TaskResultEndpoint = DefaultTaskResultEndpoint
 	}
 	if c.CheckIntervalHours <= 0 {
 		c.CheckIntervalHours = DefaultCheckIntervalHours
