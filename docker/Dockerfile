@@ -57,18 +57,27 @@ RUN GOOS=windows GOARCH=amd64 go vet ./... && \
 FROM build-env AS test
 
 # Test platform-agnostic packages natively on Linux
-RUN go test -v -count=1 ./internal/config/... ./internal/reporter/...
+RUN go test -v -count=1 ./internal/config/... ./internal/reporter/... ./internal/commander/... ./internal/executor/... ./internal/taskresult/...
 
 # Cross-compile test binaries for all platforms (catches build-tag/type errors)
-RUN GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/collector/... && \
-    GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/service/...   && \
-    GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/logging/...   && \
-    GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/collector/... && \
-    GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/service/...   && \
-    GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/logging/...   && \
-    GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/collector/... && \
-    GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/service/...   && \
-    GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/logging/...   && \
+RUN GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...   && \
+    GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/service/...     && \
+    GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/logging/...     && \
+    GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/commander/...   && \
+    GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/executor/...    && \
+    GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/taskresult/...  && \
+    GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...   && \
+    GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/service/...     && \
+    GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/logging/...     && \
+    GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/commander/...   && \
+    GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/executor/...    && \
+    GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/taskresult/...  && \
+    GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...   && \
+    GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/service/...     && \
+    GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/logging/...     && \
+    GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/commander/...   && \
+    GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/executor/...    && \
+    GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/taskresult/...  && \
     echo "All packages compiled successfully for all platforms"
 
 # ── stage: package-base ──────────────────────────────────────────────────────

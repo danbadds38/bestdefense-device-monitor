@@ -10,9 +10,12 @@ import (
 	"time"
 
 	"github.com/bestdefense/bestdefense-device-monitor/internal/collector"
+	"github.com/bestdefense/bestdefense-device-monitor/internal/commander"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/config"
+	"github.com/bestdefense/bestdefense-device-monitor/internal/executor"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/logging"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/reporter"
+	"github.com/bestdefense/bestdefense-device-monitor/internal/taskresult"
 )
 
 // ServiceName is the systemd unit name used for this agent.
@@ -78,6 +81,21 @@ func (h *Handler) runCheck(cfg *config.Config) {
 	if err := r.Send(report); err != nil {
 		h.log.Error(fmt.Sprintf("Failed to send report: %v", err))
 		return
+	}
+
+	cmdr := commander.New(cfg)
+	tasks, err := cmdr.Poll()
+	if err != nil {
+		h.log.Warning(fmt.Sprintf("Failed to poll commands: %v", err))
+	} else {
+		h.log.Info(fmt.Sprintf("Polled %d pending command(s)", len(tasks)))
+		if len(tasks) > 0 {
+			results := executor.Run(tasks)
+			poster := taskresult.New(cfg)
+			if err := poster.Post(results); err != nil {
+				h.log.Warning(fmt.Sprintf("Failed to post task results: %v", err))
+			}
+		}
 	}
 
 	h.log.Info(fmt.Sprintf("Device check completed in %.1fs, %d apps collected, %d check errors",
