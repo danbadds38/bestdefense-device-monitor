@@ -7,9 +7,12 @@ import (
 	"github.com/bestdefense/bestdefense-device-monitor/internal/commander"
 )
 
-// enableFirewall is set by the platform-specific init() in firewall_{os}.go.
-// Declared as a var so tests can replace it without executing real OS commands.
-var enableFirewall func() (string, error)
+// The following vars are set by platform-specific init() functions.
+// They are declared as vars so tests can replace them without executing real OS commands.
+var enableFirewall   func() (string, error)
+var enableScreenLock  func() (string, error)
+var enableAutoUpdates func() (string, error)
+var requestReboot     func() (string, error)
 
 // Result holds the outcome of executing a single remediation task.
 type Result struct {
@@ -39,6 +42,12 @@ func runTask(t commander.Task) Result {
 	switch t.CommandType {
 	case "enable_firewall":
 		output, err = enableFirewall()
+	case "enable_screen_lock":
+		output, err = enableScreenLock()
+	case "enable_auto_updates":
+		output, err = enableAutoUpdates()
+	case "request_reboot":
+		output, err = requestReboot()
 	default:
 		return Result{
 			TaskID:      t.ID,

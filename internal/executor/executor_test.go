@@ -14,6 +14,27 @@ func withFirewall(fn func() (string, error), test func()) {
 	test()
 }
 
+func withScreenLock(fn func() (string, error), test func()) {
+	orig := enableScreenLock
+	enableScreenLock = fn
+	defer func() { enableScreenLock = orig }()
+	test()
+}
+
+func withAutoUpdates(fn func() (string, error), test func()) {
+	orig := enableAutoUpdates
+	enableAutoUpdates = fn
+	defer func() { enableAutoUpdates = orig }()
+	test()
+}
+
+func withReboot(fn func() (string, error), test func()) {
+	orig := requestReboot
+	requestReboot = fn
+	defer func() { requestReboot = orig }()
+	test()
+}
+
 func TestRunReturnsOneResultPerTask(t *testing.T) {
 	withFirewall(func() (string, error) { return "ok", nil }, func() {
 		tasks := []commander.Task{
@@ -85,4 +106,52 @@ func TestRunEmptyTasksReturnsEmptySlice(t *testing.T) {
 	if len(results) != 0 {
 		t.Errorf("Run() with no tasks returned %d results, want 0", len(results))
 	}
+}
+
+func TestRunEnableScreenLock(t *testing.T) {
+	withScreenLock(func() (string, error) { return "Screen lock enabled.", nil }, func() {
+		tasks := []commander.Task{{ID: 10, CommandType: "enable_screen_lock"}}
+		results := Run(tasks)
+		if results[0].Status != "success" {
+			t.Errorf("Status = %q, want %q", results[0].Status, "success")
+		}
+		if results[0].Output != "Screen lock enabled." {
+			t.Errorf("Output = %q, want %q", results[0].Output, "Screen lock enabled.")
+		}
+		if results[0].TaskID != 10 {
+			t.Errorf("TaskID = %d, want 10", results[0].TaskID)
+		}
+	})
+}
+
+func TestRunEnableAutoUpdates(t *testing.T) {
+	withAutoUpdates(func() (string, error) { return "Auto updates enabled.", nil }, func() {
+		tasks := []commander.Task{{ID: 11, CommandType: "enable_auto_updates"}}
+		results := Run(tasks)
+		if results[0].Status != "success" {
+			t.Errorf("Status = %q, want %q", results[0].Status, "success")
+		}
+		if results[0].Output != "Auto updates enabled." {
+			t.Errorf("Output = %q, want %q", results[0].Output, "Auto updates enabled.")
+		}
+		if results[0].TaskID != 11 {
+			t.Errorf("TaskID = %d, want 11", results[0].TaskID)
+		}
+	})
+}
+
+func TestRunRequestReboot(t *testing.T) {
+	withReboot(func() (string, error) { return "Reboot scheduled.", nil }, func() {
+		tasks := []commander.Task{{ID: 12, CommandType: "request_reboot"}}
+		results := Run(tasks)
+		if results[0].Status != "success" {
+			t.Errorf("Status = %q, want %q", results[0].Status, "success")
+		}
+		if results[0].Output != "Reboot scheduled." {
+			t.Errorf("Output = %q, want %q", results[0].Output, "Reboot scheduled.")
+		}
+		if results[0].TaskID != 12 {
+			t.Errorf("TaskID = %d, want 12", results[0].TaskID)
+		}
+	})
 }
