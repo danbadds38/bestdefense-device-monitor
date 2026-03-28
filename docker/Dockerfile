@@ -57,12 +57,13 @@ RUN GOOS=windows GOARCH=amd64 go vet ./... && \
 FROM build-env AS test
 
 # Test platform-agnostic packages natively on Linux
-RUN go test -v -count=1 ./internal/config/... ./internal/identity/... ./internal/httpsign/... ./internal/reporter/... ./internal/commander/... ./internal/executor/... ./internal/taskresult/...
+RUN go test -v -count=1 ./internal/config/... ./internal/identity/... ./internal/httpsign/... ./internal/serverkey/... ./internal/reporter/... ./internal/commander/... ./internal/executor/... ./internal/taskresult/...
 
 # Cross-compile test binaries for all platforms (catches build-tag/type errors)
 RUN GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...   && \
     GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/identity/...    && \
     GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/httpsign/...   && \
+    GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/serverkey/...  && \
     GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/service/...     && \
     GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/logging/...     && \
     GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/commander/...   && \
@@ -71,6 +72,7 @@ RUN GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...  
     GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...   && \
     GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/identity/...    && \
     GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/httpsign/...   && \
+    GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/serverkey/...  && \
     GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/service/...     && \
     GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/logging/...     && \
     GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/commander/...   && \
@@ -79,6 +81,7 @@ RUN GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...  
     GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...   && \
     GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/identity/...    && \
     GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/httpsign/...   && \
+    GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/serverkey/...  && \
     GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/service/...     && \
     GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/logging/...     && \
     GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/commander/...   && \
