@@ -13,6 +13,7 @@ import (
 	"github.com/bestdefense/bestdefense-device-monitor/internal/commander"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/config"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/executor"
+	"github.com/bestdefense/bestdefense-device-monitor/internal/identity"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/logging"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/reporter"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/taskresult"
@@ -32,7 +33,6 @@ func New(log *logging.Logger) *Handler {
 }
 
 // Run starts the check scheduler and blocks until SIGTERM or SIGINT is received.
-// This is called when the binary is invoked with the "run" argument by launchd.
 func (h *Handler) Run() {
 	cfg, err := config.Load()
 	if err != nil {
@@ -46,6 +46,14 @@ func (h *Handler) Run() {
 
 	h.log.Info("BestDefense Device Monitor daemon starting")
 
+	kp, err := identity.LoadOrGenerate()
+	if err != nil {
+		h.log.Error(fmt.Sprintf("Failed to load identity key: %v", err))
+		os.Exit(1)
+	}
+	cfg.PublicKeyBase64 = kp.PublicKeyBase64()
+	h.log.Info("Identity key loaded")
+
 	interval := time.Duration(cfg.CheckIntervalHours) * time.Hour
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
@@ -53,13 +61,12 @@ func (h *Handler) Run() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGTERM, syscall.SIGINT)
 
-	// Run one check immediately on start
-	h.runCheck(cfg)
+	h.runCheck(cfg, kp)
 
 	for {
 		select {
 		case <-ticker.C:
-			h.runCheck(cfg)
+			h.runCheck(cfg, kp)
 		case sig := <-sigs:
 			h.log.Info(fmt.Sprintf("Received signal %s, stopping", sig))
 			return
@@ -67,7 +74,7 @@ func (h *Handler) Run() {
 	}
 }
 
-func (h *Handler) runCheck(cfg *config.Config) {
+func (h *Handler) runCheck(cfg *config.Config, kp *identity.KeyPair) {
 	h.log.Info("Starting device check")
 	start := time.Now()
 
@@ -77,13 +84,13 @@ func (h *Handler) runCheck(cfg *config.Config) {
 		h.log.Warning(fmt.Sprintf("Check %q error: %s", ce.Check, ce.Error))
 	}
 
-	r := reporter.New(cfg)
+	r := reporter.New(cfg).WithKeyPair(kp)
 	if err := r.Send(report); err != nil {
 		h.log.Error(fmt.Sprintf("Failed to send report: %v", err))
 		return
 	}
 
-	cmdr := commander.New(cfg)
+	cmdr := commander.New(cfg).WithKeyPair(kp)
 	tasks, err := cmdr.Poll()
 	if err != nil {
 		h.log.Warning(fmt.Sprintf("Failed to poll commands: %v", err))
@@ -91,7 +98,7 @@ func (h *Handler) runCheck(cfg *config.Config) {
 		h.log.Info(fmt.Sprintf("Polled %d pending command(s)", len(tasks)))
 		if len(tasks) > 0 {
 			results := executor.Run(tasks)
-			poster := taskresult.New(cfg)
+			poster := taskresult.New(cfg).WithKeyPair(kp)
 			if err := poster.Post(results); err != nil {
 				h.log.Warning(fmt.Sprintf("Failed to post task results: %v", err))
 			}

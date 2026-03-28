@@ -10,12 +10,15 @@ import (
 
 	"github.com/bestdefense/bestdefense-device-monitor/internal/config"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/executor"
+	"github.com/bestdefense/bestdefense-device-monitor/internal/httpsign"
+	"github.com/bestdefense/bestdefense-device-monitor/internal/identity"
 )
 
 // Poster sends task execution results to the server's /agent/task-result endpoint.
 type Poster struct {
 	cfg    *config.Config
 	client *http.Client
+	kp     *identity.KeyPair
 }
 
 // New creates a Poster configured from cfg with a default HTTP client.
@@ -28,6 +31,13 @@ func New(cfg *config.Config) *Poster {
 // NewWithClient creates a Poster with an explicit HTTP client (used in tests).
 func NewWithClient(cfg *config.Config, client *http.Client) *Poster {
 	return &Poster{cfg: cfg, client: client}
+}
+
+// WithKeyPair sets the identity key pair used to sign outbound requests.
+// Returns the Poster for chaining.
+func (p *Poster) WithKeyPair(kp *identity.KeyPair) *Poster {
+	p.kp = kp
+	return p
 }
 
 type resultPayload struct {
@@ -80,6 +90,10 @@ func (p *Poster) postOne(r executor.Result) error {
 	req.Header.Set("User-Agent", fmt.Sprintf("bestdefense-device-monitor/%s", p.cfg.AgentVersion))
 	req.Header.Set("X-Registration-Key", p.cfg.RegistrationKey)
 	req.Header.Set("X-Agent-ID", p.cfg.AgentID)
+
+	if err := httpsign.AddSignature(req, p.kp, body); err != nil {
+		return fmt.Errorf("signing request: %w", err)
+	}
 
 	resp, err := p.client.Do(req)
 	if err != nil {

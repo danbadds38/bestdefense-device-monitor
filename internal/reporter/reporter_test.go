@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/bestdefense/bestdefense-device-monitor/internal/config"
+	"github.com/bestdefense/bestdefense-device-monitor/internal/identity"
 )
 
 // testReport returns a minimal DeviceReport for use in tests.
@@ -237,5 +238,59 @@ func TestSendFailsAfterAllRetries(t *testing.T) {
 
 	if err := r.Send(testReport("hw-uuid-007")); err == nil {
 		t.Error("Send() should return error when all retries fail")
+	}
+}
+
+// TestSendSetsTimestampHeaderWhenKeyPairIsSet verifies X-Timestamp is present when signing.
+func TestSendSetsTimestampHeaderWhenKeyPairIsSet(t *testing.T) {
+	t.Setenv("BESTDEFENSE_IDENTITY_PATH", t.TempDir()+"/test.key")
+	kp, err := identity.Generate()
+	if err != nil {
+		t.Fatalf("identity.Generate(): %v", err)
+	}
+
+	var got string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = r.Header.Get("X-Timestamp")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, `{"success":true,"data":{"agent_id":1}}`)
+	}))
+	defer srv.Close()
+
+	cfg := testConfig(srv.URL)
+	r := NewWithClient(cfg, srv.Client()).WithKeyPair(kp)
+	if err := r.Send(testReport("hw-uuid-sign-001")); err != nil {
+		t.Fatalf("Send() error: %v", err)
+	}
+
+	if got == "" {
+		t.Error("X-Timestamp header not set when KeyPair is configured")
+	}
+}
+
+// TestSendSetsSignatureHeaderWhenKeyPairIsSet verifies X-Signature is present when signing.
+func TestSendSetsSignatureHeaderWhenKeyPairIsSet(t *testing.T) {
+	t.Setenv("BESTDEFENSE_IDENTITY_PATH", t.TempDir()+"/test.key")
+	kp, err := identity.Generate()
+	if err != nil {
+		t.Fatalf("identity.Generate(): %v", err)
+	}
+
+	var got string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = r.Header.Get("X-Signature")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, `{"success":true,"data":{"agent_id":1}}`)
+	}))
+	defer srv.Close()
+
+	cfg := testConfig(srv.URL)
+	r := NewWithClient(cfg, srv.Client()).WithKeyPair(kp)
+	if err := r.Send(testReport("hw-uuid-sign-002")); err != nil {
+		t.Fatalf("Send() error: %v", err)
+	}
+
+	if got == "" {
+		t.Error("X-Signature header not set when KeyPair is configured")
 	}
 }

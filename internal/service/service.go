@@ -10,6 +10,7 @@ import (
 	"github.com/bestdefense/bestdefense-device-monitor/internal/commander"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/config"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/executor"
+	"github.com/bestdefense/bestdefense-device-monitor/internal/identity"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/logging"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/reporter"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/taskresult"
@@ -30,7 +31,6 @@ func New(log *logging.Logger) *Handler {
 }
 
 // Execute is called by the Windows Service Control Manager.
-// It runs the scheduler loop and handles service control requests.
 func (h *Handler) Execute(args []string, r <-chan svc.ChangeRequest, s chan<- svc.Status) (bool, uint32) {
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown | svc.AcceptPauseAndContinue
 
@@ -43,12 +43,21 @@ func (h *Handler) Execute(args []string, r <-chan svc.ChangeRequest, s chan<- sv
 		return false, 1
 	}
 
-	// Upgrade logger to file logger now that we have config
 	fileLog := logging.NewFileLogger(cfg.LogFile, cfg.MaxLogSizeMB)
 	defer fileLog.Close()
 	h.log = fileLog
 
 	h.log.Info("BestDefense Device Monitor service starting")
+
+	kp, err := identity.LoadOrGenerate()
+	if err != nil {
+		h.log.Error(fmt.Sprintf("Failed to load identity key: %v", err))
+		s <- svc.Status{State: svc.Stopped}
+		return false, 1
+	}
+	cfg.PublicKeyBase64 = kp.PublicKeyBase64()
+	h.log.Info("Identity key loaded")
+
 	s <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
 
 	interval := time.Duration(cfg.CheckIntervalHours) * time.Hour
@@ -57,14 +66,13 @@ func (h *Handler) Execute(args []string, r <-chan svc.ChangeRequest, s chan<- sv
 
 	paused := false
 
-	// Run one check immediately on start
-	h.runCheck(cfg)
+	h.runCheck(cfg, kp)
 
 	for {
 		select {
 		case <-ticker.C:
 			if !paused {
-				h.runCheck(cfg)
+				h.runCheck(cfg, kp)
 			}
 
 		case req := <-r:
@@ -86,14 +94,13 @@ func (h *Handler) Execute(args []string, r <-chan svc.ChangeRequest, s chan<- sv
 				paused = false
 				s <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
 				h.log.Info("Service resumed")
-				// Run a check immediately after resume
-				h.runCheck(cfg)
+				h.runCheck(cfg, kp)
 			}
 		}
 	}
 }
 
-func (h *Handler) runCheck(cfg *config.Config) {
+func (h *Handler) runCheck(cfg *config.Config, kp *identity.KeyPair) {
 	h.log.Info("Starting device check")
 	start := time.Now()
 
@@ -105,13 +112,13 @@ func (h *Handler) runCheck(cfg *config.Config) {
 		}
 	}
 
-	r := reporter.New(cfg)
+	r := reporter.New(cfg).WithKeyPair(kp)
 	if err := r.Send(report); err != nil {
 		h.log.Error(fmt.Sprintf("Failed to send report: %v", err))
 		return
 	}
 
-	cmdr := commander.New(cfg)
+	cmdr := commander.New(cfg).WithKeyPair(kp)
 	tasks, err := cmdr.Poll()
 	if err != nil {
 		h.log.Warning(fmt.Sprintf("Failed to poll commands: %v", err))
@@ -119,7 +126,7 @@ func (h *Handler) runCheck(cfg *config.Config) {
 		h.log.Info(fmt.Sprintf("Polled %d pending command(s)", len(tasks)))
 		if len(tasks) > 0 {
 			results := executor.Run(tasks)
-			poster := taskresult.New(cfg)
+			poster := taskresult.New(cfg).WithKeyPair(kp)
 			if err := poster.Post(results); err != nil {
 				h.log.Warning(fmt.Sprintf("Failed to post task results: %v", err))
 			}

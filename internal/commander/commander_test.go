@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/bestdefense/bestdefense-device-monitor/internal/config"
+	"github.com/bestdefense/bestdefense-device-monitor/internal/identity"
 )
 
 // testConfig returns a minimal Config pointing at the given server URL.
@@ -166,5 +167,59 @@ func TestPollReturnsErrorOnNonSuccessStatus(t *testing.T) {
 	_, err := c.Poll()
 	if err == nil {
 		t.Error("Poll() should return error for 4xx response")
+	}
+}
+
+// TestPollSetsTimestampHeaderWhenKeyPairIsSet verifies X-Timestamp is present when signing.
+func TestPollSetsTimestampHeaderWhenKeyPairIsSet(t *testing.T) {
+	t.Setenv("BESTDEFENSE_IDENTITY_PATH", t.TempDir()+"/test.key")
+	kp, err := identity.Generate()
+	if err != nil {
+		t.Fatalf("identity.Generate(): %v", err)
+	}
+
+	var got string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = r.Header.Get("X-Timestamp")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, `{"success":true,"data":{"commands":[]}}`)
+	}))
+	defer srv.Close()
+
+	cfg := testConfig(srv.URL)
+	c := NewWithClient(cfg, srv.Client()).WithKeyPair(kp)
+	if _, err := c.Poll(); err != nil {
+		t.Fatalf("Poll() error: %v", err)
+	}
+
+	if got == "" {
+		t.Error("X-Timestamp header not set when KeyPair is configured")
+	}
+}
+
+// TestPollSetsSignatureHeaderWhenKeyPairIsSet verifies X-Signature is present when signing.
+func TestPollSetsSignatureHeaderWhenKeyPairIsSet(t *testing.T) {
+	t.Setenv("BESTDEFENSE_IDENTITY_PATH", t.TempDir()+"/test.key")
+	kp, err := identity.Generate()
+	if err != nil {
+		t.Fatalf("identity.Generate(): %v", err)
+	}
+
+	var got string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got = r.Header.Get("X-Signature")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, `{"success":true,"data":{"commands":[]}}`)
+	}))
+	defer srv.Close()
+
+	cfg := testConfig(srv.URL)
+	c := NewWithClient(cfg, srv.Client()).WithKeyPair(kp)
+	if _, err := c.Poll(); err != nil {
+		t.Fatalf("Poll() error: %v", err)
+	}
+
+	if got == "" {
+		t.Error("X-Signature header not set when KeyPair is configured")
 	}
 }

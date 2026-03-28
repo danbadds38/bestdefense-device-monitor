@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/bestdefense/bestdefense-device-monitor/internal/config"
+	"github.com/bestdefense/bestdefense-device-monitor/internal/httpsign"
+	"github.com/bestdefense/bestdefense-device-monitor/internal/identity"
 )
 
 // Task represents a single pending remediation command from the server.
@@ -31,6 +33,7 @@ type commandsRespData struct {
 type Commander struct {
 	cfg    *config.Config
 	client *http.Client
+	kp     *identity.KeyPair
 }
 
 // New creates a Commander configured from cfg.
@@ -43,6 +46,13 @@ func New(cfg *config.Config) *Commander {
 // NewWithClient creates a Commander with an explicit HTTP client (used in tests).
 func NewWithClient(cfg *config.Config, client *http.Client) *Commander {
 	return &Commander{cfg: cfg, client: client}
+}
+
+// WithKeyPair sets the identity key pair used to sign outbound requests.
+// Returns the Commander for chaining.
+func (c *Commander) WithKeyPair(kp *identity.KeyPair) *Commander {
+	c.kp = kp
+	return c
 }
 
 // Poll fetches pending commands from the server's /agent/commands endpoint.
@@ -61,6 +71,10 @@ func (c *Commander) Poll() ([]Task, error) {
 	req.Header.Set("User-Agent", fmt.Sprintf("bestdefense-device-monitor/%s", c.cfg.AgentVersion))
 	req.Header.Set("X-Registration-Key", c.cfg.RegistrationKey)
 	req.Header.Set("X-Agent-ID", c.cfg.AgentID)
+
+	if err := httpsign.AddSignature(req, c.kp, nil); err != nil {
+		return nil, fmt.Errorf("signing commands request: %w", err)
+	}
 
 	resp, err := c.client.Do(req)
 	if err != nil {

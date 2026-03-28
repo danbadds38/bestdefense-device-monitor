@@ -3,7 +3,9 @@ package identity
 import (
 	"crypto/ed25519"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -103,4 +105,13 @@ func saveKeyPair(kp *KeyPair) error {
 	}
 
 	return writeKeyFile(path, pem.EncodeToMemory(block))
+}
+
+// Sign produces an Ed25519 signature over the canonical request message.
+// Message format: "METHOD\n/path\nhex(sha256(body))\ntimestamp_seconds"
+// For GET requests with no body, pass nil or empty slice.
+func (kp *KeyPair) Sign(method, path string, body []byte, timestamp int64) []byte {
+	h := sha256.Sum256(body)
+	msg := fmt.Sprintf("%s\n%s\n%s\n%d", method, path, hex.EncodeToString(h[:]), timestamp)
+	return ed25519.Sign(kp.PrivateKey, []byte(msg))
 }

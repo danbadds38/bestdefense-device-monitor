@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/bestdefense/bestdefense-device-monitor/internal/config"
+	"github.com/bestdefense/bestdefense-device-monitor/internal/httpsign"
+	"github.com/bestdefense/bestdefense-device-monitor/internal/identity"
 )
 
 // checkinResponse mirrors the JSON envelope returned by POST /agent/checkin.
@@ -27,6 +29,7 @@ type checkinRespData struct {
 type Reporter struct {
 	cfg    *config.Config
 	client *http.Client
+	kp     *identity.KeyPair
 }
 
 // New creates a Reporter configured from cfg.
@@ -39,6 +42,13 @@ func New(cfg *config.Config) *Reporter {
 // NewWithClient creates a Reporter with an explicit HTTP client (used in tests).
 func NewWithClient(cfg *config.Config, client *http.Client) *Reporter {
 	return &Reporter{cfg: cfg, client: client}
+}
+
+// WithKeyPair sets the identity key pair used to sign outbound requests.
+// Returns the Reporter for chaining.
+func (r *Reporter) WithKeyPair(kp *identity.KeyPair) *Reporter {
+	r.kp = kp
+	return r
 }
 
 // Send POSTs the report to the configured API endpoint.
@@ -60,7 +70,7 @@ func (r *Reporter) Send(report *DeviceReport) error {
 		// Persist agent_id on first successful enrollment
 		if resp != nil && resp.AgentID > 0 && r.cfg.AgentID == "" {
 			r.cfg.AgentID = fmt.Sprintf("%d", resp.AgentID)
-			// Best-effort save — don't fail the send if we can't persist
+			// Best-effort save - don't fail the send if we can't persist
 			_ = config.Save(r.cfg)
 		}
 		return nil
@@ -93,13 +103,17 @@ func (r *Reporter) sendOnce(report *DeviceReport) (*checkinRespData, error) {
 		req.Header.Set("X-Agent-Public-Key", r.cfg.PublicKeyBase64)
 	}
 
+	if err := httpsign.AddSignature(req, r.kp, body); err != nil {
+		return nil, fmt.Errorf("signing request: %w", err)
+	}
+
 	httpResp, err := r.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("sending request: %w", err)
 	}
 	defer httpResp.Body.Close()
 
-	// Read up to 8KB — enough for the check-in response JSON
+	// Read up to 8KB - enough for the check-in response JSON
 	respBody, _ := io.ReadAll(io.LimitReader(httpResp.Body, 8192))
 
 	if httpResp.StatusCode < 200 || httpResp.StatusCode >= 300 {
