@@ -88,6 +88,10 @@ func (r *Reporter) sendOnce(report *DeviceReport) (*checkinRespData, error) {
 	if r.cfg.AgentID != "" {
 		req.Header.Set("X-Agent-ID", r.cfg.AgentID)
 	}
+	// On first enrollment, advertise the device's Ed25519 public key.
+	if r.cfg.AgentID == "" && r.cfg.PublicKeyBase64 != "" {
+		req.Header.Set("X-Agent-Public-Key", r.cfg.PublicKeyBase64)
+	}
 
 	httpResp, err := r.client.Do(req)
 	if err != nil {

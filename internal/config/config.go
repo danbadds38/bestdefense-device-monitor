@@ -25,6 +25,9 @@ type Config struct {
 	HTTPTimeoutSeconds int    `json:"http_timeout_seconds"`
 	RetryAttempts      int    `json:"retry_attempts"`
 	RetryDelaySeconds  int    `json:"retry_delay_seconds"`
+	// PublicKeyBase64 is the base64-encoded Ed25519 public key for this device.
+	// It is populated at startup from the identity key file, not from config.json.
+	PublicKeyBase64 string `json:"-"`
 }
 
 // DataDir returns the path to the agent's data directory.
