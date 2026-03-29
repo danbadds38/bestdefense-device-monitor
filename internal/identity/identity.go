@@ -115,3 +115,51 @@ func (kp *KeyPair) Sign(method, path string, body []byte, timestamp int64) []byt
 	msg := fmt.Sprintf("%s\n%s\n%s\n%d", method, path, hex.EncodeToString(h[:]), timestamp)
 	return ed25519.Sign(kp.PrivateKey, []byte(msg))
 }
+
+// PendingRotation represents a new key pair that has been generated and staged
+// at a temporary path, awaiting server confirmation before being committed.
+type PendingRotation struct {
+	tmpPath   string
+	finalPath string
+}
+
+// Rotate generates a new Ed25519 key pair and stages it at {keyPath}.tmp.
+// The new key is NOT written to the final path until Commit() is called,
+// so the old key remains usable if the server rejects the rotation.
+// Call Rollback() to discard the staged file on failure.
+func Rotate() (*KeyPair, *PendingRotation, error) {
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return nil, nil, fmt.Errorf("generating new Ed25519 key pair: %w", err)
+	}
+
+	newKP := &KeyPair{PublicKey: pub, PrivateKey: priv}
+
+	finalPath := KeyPath()
+	tmpPath   := finalPath + ".tmp"
+
+	seed  := priv.Seed()
+	block := &pem.Block{Type: pemType, Bytes: seed}
+	if err := writeKeyFile(tmpPath, pem.EncodeToMemory(block)); err != nil {
+		return nil, nil, fmt.Errorf("writing staged key to %s: %w", tmpPath, err)
+	}
+
+	return newKP, &PendingRotation{tmpPath: tmpPath, finalPath: finalPath}, nil
+}
+
+// Commit atomically replaces the current key file with the staged file.
+// After Commit, Load() will return the new key pair.
+func (p *PendingRotation) Commit() error {
+	if err := os.Rename(p.tmpPath, p.finalPath); err != nil {
+		return fmt.Errorf("committing rotated key: %w", err)
+	}
+	return nil
+}
+
+// Rollback deletes the staged key file, leaving the original key unchanged.
+func (p *PendingRotation) Rollback() error {
+	if err := os.Remove(p.tmpPath); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("rolling back staged key: %w", err)
+	}
+	return nil
+}

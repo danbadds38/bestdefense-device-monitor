@@ -85,3 +85,110 @@ func TestKeyPathEnvOverride(t *testing.T) {
 		t.Errorf("key file not created at custom path %q: %v", customPath, err)
 	}
 }
+
+func TestRotateGeneratesNewKeyPair(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("BESTDEFENSE_IDENTITY_PATH", dir+"/agent_identity.key")
+
+	original, err := Generate()
+	if err != nil {
+		t.Fatalf("Generate() error: %v", err)
+	}
+
+	newKP, pending, err := Rotate()
+	if err != nil {
+		t.Fatalf("Rotate() error: %v", err)
+	}
+	defer pending.Rollback() //nolint:errcheck
+
+	if original.PublicKey.Equal(newKP.PublicKey) {
+		t.Error("Rotate() returned the same public key as the original")
+	}
+}
+
+func TestCommitReplacesOldKey(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("BESTDEFENSE_IDENTITY_PATH", dir+"/agent_identity.key")
+
+	original, err := Generate()
+	if err != nil {
+		t.Fatalf("Generate() error: %v", err)
+	}
+
+	newKP, pending, err := Rotate()
+	if err != nil {
+		t.Fatalf("Rotate() error: %v", err)
+	}
+
+	if err := pending.Commit(); err != nil {
+		t.Fatalf("Commit() error: %v", err)
+	}
+
+	loaded, err := Load()
+	if err != nil {
+		t.Fatalf("Load() after Commit() error: %v", err)
+	}
+
+	if !loaded.PublicKey.Equal(newKP.PublicKey) {
+		t.Error("Load() after Commit() returned old key, expected new key")
+	}
+	if loaded.PublicKey.Equal(original.PublicKey) {
+		t.Error("Load() after Commit() returned original key, expected new key")
+	}
+}
+
+func TestRollbackDeletesStagedFile(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("BESTDEFENSE_IDENTITY_PATH", dir+"/agent_identity.key")
+
+	if _, err := Generate(); err != nil {
+		t.Fatalf("Generate() error: %v", err)
+	}
+
+	_, pending, err := Rotate()
+	if err != nil {
+		t.Fatalf("Rotate() error: %v", err)
+	}
+
+	tmpPath := pending.tmpPath
+	if _, err := os.Stat(tmpPath); err != nil {
+		t.Fatalf("staged file should exist before Rollback, got: %v", err)
+	}
+
+	if err := pending.Rollback(); err != nil {
+		t.Fatalf("Rollback() error: %v", err)
+	}
+
+	if _, err := os.Stat(tmpPath); !os.IsNotExist(err) {
+		t.Error("staged file should not exist after Rollback")
+	}
+}
+
+func TestRotateIsIdempotentOnFailure(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("BESTDEFENSE_IDENTITY_PATH", dir+"/agent_identity.key")
+
+	original, err := Generate()
+	if err != nil {
+		t.Fatalf("Generate() error: %v", err)
+	}
+
+	_, pending, err := Rotate()
+	if err != nil {
+		t.Fatalf("Rotate() error: %v", err)
+	}
+
+	// Simulate server error — rollback
+	if err := pending.Rollback(); err != nil {
+		t.Fatalf("Rollback() error: %v", err)
+	}
+
+	// Load should still return the original key
+	loaded, err := Load()
+	if err != nil {
+		t.Fatalf("Load() after Rollback() error: %v", err)
+	}
+	if !loaded.PublicKey.Equal(original.PublicKey) {
+		t.Error("Load() after Rollback() returned wrong key; original should be unchanged")
+	}
+}

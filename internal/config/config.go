@@ -16,6 +16,7 @@ type Config struct {
 	APIEndpoint        string `json:"api_endpoint"`
 	CommandsEndpoint   string `json:"commands_endpoint"`
 	TaskResultEndpoint string `json:"task_result_endpoint"`
+	RotateKeyEndpoint  string `json:"rotate_key_endpoint"`
 	CheckIntervalHours int    `json:"check_interval_hours"`
 	AgentVersion       string `json:"agent_version"`
 	LogLevel           string `json:"log_level"`
@@ -113,6 +114,9 @@ func (c *Config) validate() error {
 	}
 	if c.TaskResultEndpoint == "" {
 		c.TaskResultEndpoint = DefaultTaskResultEndpoint
+	}
+	if c.RotateKeyEndpoint == "" {
+		c.RotateKeyEndpoint = DefaultRotateKeyEndpoint
 	}
 	if c.CheckIntervalHours <= 0 {
 		c.CheckIntervalHours = DefaultCheckIntervalHours

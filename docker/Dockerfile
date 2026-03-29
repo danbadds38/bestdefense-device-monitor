@@ -12,7 +12,7 @@
 
 ARG GO_VERSION=1.22
 
-# ── stage: deps ─────────────────────────────────────────────────────────────
+# ── stage: deps ───────────────────────────────────────────────────────────────────────────
 # Download modules into a layer that only rebuilds when go.mod/go.sum change.
 FROM golang:${GO_VERSION}-alpine AS deps
 
@@ -20,7 +20,7 @@ WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 
-# ── stage: build-env ─────────────────────────────────────────────────────────
+# ── stage: build-env ─────────────────────────────────────────────────────────────────────────
 # Source + deps, ready to compile.  Actual go build is run at container start
 # so the volume-mounted /out directory receives the produced binaries.
 FROM deps AS build-env
@@ -35,7 +35,7 @@ COPY . .
 ENV VERSION=${VERSION} GIT_COMMIT=${GIT_COMMIT} BUILD_DATE=${BUILD_DATE}
 ENV CGO_ENABLED=0
 
-# ── stage: vet ──────────────────────────────────────────────────────────────
+# ── stage: vet ────────────────────────────────────────────────────────────────────────────
 # Run go vet with GOOS=windows (backward-compatible default).
 # Runs at docker build time so the compose `run --rm vet` image is cached.
 FROM build-env AS vet
@@ -43,7 +43,7 @@ FROM build-env AS vet
 ENV GOOS=windows GOARCH=amd64
 RUN go vet ./...
 
-# ── stage: vet-all ──────────────────────────────────────────────────────────
+# ── stage: vet-all ──────────────────────────────────────────────────────────────────────────
 # Run go vet across all three platforms.
 FROM build-env AS vet-all
 
@@ -52,12 +52,12 @@ RUN GOOS=windows GOARCH=amd64 go vet ./... && \
     GOOS=linux   GOARCH=amd64 go vet ./... && \
     echo "vet: all platforms passed"
 
-# ── stage: test ─────────────────────────────────────────────────────────────
+# ── stage: test ─────────────────────────────────────────────────────────────────────────────
 # Run tests for platform-agnostic packages natively; cross-compile all others.
 FROM build-env AS test
 
 # Test platform-agnostic packages natively on Linux
-RUN go test -v -count=1 ./internal/config/... ./internal/identity/... ./internal/httpsign/... ./internal/serverkey/... ./internal/reporter/... ./internal/commander/... ./internal/executor/... ./internal/taskresult/...
+RUN go test -v -count=1 ./internal/config/... ./internal/identity/... ./internal/httpsign/... ./internal/serverkey/... ./internal/reporter/... ./internal/commander/... ./internal/executor/... ./internal/keyrotation/... ./internal/taskresult/...
 
 # Cross-compile test binaries for all platforms (catches build-tag/type errors)
 RUN GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...   && \
@@ -68,6 +68,7 @@ RUN GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...  
     GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/logging/...     && \
     GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/commander/...   && \
     GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/executor/...    && \
+    GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/keyrotation/... && \
     GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/taskresult/...  && \
     GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...   && \
     GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/identity/...    && \
@@ -77,6 +78,7 @@ RUN GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...  
     GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/logging/...     && \
     GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/commander/...   && \
     GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/executor/...    && \
+    GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/keyrotation/... && \
     GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/taskresult/...  && \
     GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...   && \
     GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/identity/...    && \
@@ -86,10 +88,11 @@ RUN GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...  
     GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/logging/...     && \
     GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/commander/...   && \
     GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/executor/...    && \
+    GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/keyrotation/... && \
     GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/taskresult/...  && \
     echo "All packages compiled successfully for all platforms"
 
-# ── stage: package-base ──────────────────────────────────────────────────────
+# ── stage: package-base ─────────────────────────────────────────────────────────────────────────
 # build-env + fpm for .deb/.rpm packaging.
 # The actual fpm invocations run at container start time (see docker-compose.yml).
 FROM build-env AS package-base

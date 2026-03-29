@@ -10,6 +10,7 @@ const (
 	DefaultAPIEndpoint         = "https://app.bestdefense.io/agent/checkin"
 	DefaultCommandsEndpoint    = "https://app.bestdefense.io/agent/commands"
 	DefaultTaskResultEndpoint  = "https://app.bestdefense.io/agent/task-result"
+	DefaultRotateKeyEndpoint   = "https://app.bestdefense.io/agent/rotate-key"
 	DefaultCheckIntervalHours  = 4
 	DefaultHTTPTimeoutSeconds  = 30
 	DefaultRetryAttempts       = 3
@@ -32,6 +33,7 @@ func Default() *Config {
 		APIEndpoint:        DefaultAPIEndpoint,
 		CommandsEndpoint:   DefaultCommandsEndpoint,
 		TaskResultEndpoint: DefaultTaskResultEndpoint,
+		RotateKeyEndpoint:  DefaultRotateKeyEndpoint,
 		CheckIntervalHours: DefaultCheckIntervalHours,
 		AgentVersion:       "dev",
 		LogLevel:           DefaultLogLevel,

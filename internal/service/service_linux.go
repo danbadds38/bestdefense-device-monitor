@@ -14,6 +14,7 @@ import (
 	"github.com/bestdefense/bestdefense-device-monitor/internal/config"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/executor"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/identity"
+	"github.com/bestdefense/bestdefense-device-monitor/internal/keyrotation"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/logging"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/reporter"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/taskresult"
@@ -61,6 +62,8 @@ func (h *Handler) Run() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGTERM, syscall.SIGINT)
 
+	executor.SetRotateKeysFunc(keyrotation.New(cfg).Rotate)
+
 	h.runCheck(cfg, kp)
 
 	for {
@@ -97,7 +100,7 @@ func (h *Handler) runCheck(cfg *config.Config, kp *identity.KeyPair) {
 	} else {
 		h.log.Info(fmt.Sprintf("Polled %d pending command(s)", len(tasks)))
 		if len(tasks) > 0 {
-			results := executor.Run(tasks)
+			results := executor.Run(tasks, kp)
 			poster := taskresult.New(cfg).WithKeyPair(kp)
 			if err := poster.Post(results); err != nil {
 				h.log.Warning(fmt.Sprintf("Failed to post task results: %v", err))
