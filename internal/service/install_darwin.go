@@ -41,7 +41,16 @@ const plistTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 
 // Install writes a launchd plist and loads it.
 // Requires root (sudo).
-func Install(exePath string) error {
+//
+// Idempotent: if the plist already exists and opts.Force is false, Install
+// restarts the daemon to pick up config changes without rewriting the plist.
+// If opts.Force is true the plist is rewritten and the daemon reloaded.
+func Install(exePath string, opts InstallOptions) error {
+	// Idempotent: already installed
+	if _, err := os.Stat(plistPath); err == nil && !opts.Force {
+		return Restart()
+	}
+
 	// Resolve absolute path
 	abs, err := filepath.Abs(exePath)
 	if err != nil {
@@ -73,6 +82,16 @@ func Install(exePath string) error {
 		return fmt.Errorf("launchctl load: %w: %s", err, strings.TrimSpace(string(out)))
 	}
 
+	return nil
+}
+
+// Restart unloads then reloads the launchd daemon so it picks up config changes.
+// Requires root (sudo).
+func Restart() error {
+	exec.Command("launchctl", "unload", plistPath).Run()
+	if out, err := exec.Command("launchctl", "load", "-w", plistPath).CombinedOutput(); err != nil {
+		return fmt.Errorf("launchctl load: %w: %s", err, strings.TrimSpace(string(out)))
+	}
 	return nil
 }
 

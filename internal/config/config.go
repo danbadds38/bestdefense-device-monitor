@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 )
 
 // Config holds all agent configuration. Stored at C:\ProgramData\BestDefense\config.json.
@@ -29,6 +31,45 @@ type Config struct {
 	// PublicKeyBase64 is the base64-encoded Ed25519 public key for this device.
 	// It is populated at startup from the identity key file, not from config.json.
 	PublicKeyBase64 string `json:"-"`
+}
+
+// EndpointsFromHost derives the four agent endpoint URLs from a base host URL.
+// host should be scheme + hostname, e.g. "https://app.bestdefense.io".
+// A trailing slash on host is stripped before appending paths.
+func EndpointsFromHost(host string) (api, commands, taskResult, rotateKey string) {
+	base := strings.TrimRight(host, "/")
+	return base + "/agent/checkin",
+		base + "/agent/commands",
+		base + "/agent/task-result",
+		base + "/agent/rotate-key"
+}
+
+// LoadFromEnv overlays environment variable values onto c.
+// Only non-empty env vars are applied; existing values are preserved.
+// Precedence: env var > value already set in c.
+//
+// Variables recognised:
+//
+//	BESTDEFENSE_KEY          registration key
+//	BESTDEFENSE_HOST         base URL — derives all four endpoints
+//	BESTDEFENSE_INTERVAL     check interval in hours (integer)
+//	BESTDEFENSE_LOG_LEVEL    log level: debug|info|warn|error
+func (c *Config) LoadFromEnv() {
+	if v := os.Getenv("BESTDEFENSE_KEY"); v != "" {
+		c.RegistrationKey = v
+	}
+	if v := os.Getenv("BESTDEFENSE_HOST"); v != "" {
+		c.APIEndpoint, c.CommandsEndpoint, c.TaskResultEndpoint, c.RotateKeyEndpoint =
+			EndpointsFromHost(v)
+	}
+	if v := os.Getenv("BESTDEFENSE_INTERVAL"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			c.CheckIntervalHours = n
+		}
+	}
+	if v := os.Getenv("BESTDEFENSE_LOG_LEVEL"); v != "" {
+		c.LogLevel = v
+	}
 }
 
 // DataDir returns the path to the agent's data directory.
@@ -74,6 +115,8 @@ func Load() (*Config, error) {
 	if err := json.NewDecoder(f).Decode(cfg); err != nil {
 		return nil, fmt.Errorf("parsing config %s: %w", path, err)
 	}
+
+	cfg.LoadFromEnv() // env vars take precedence over file values
 
 	if err := cfg.validate(); err != nil {
 		return nil, fmt.Errorf("invalid config: %w", err)

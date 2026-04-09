@@ -20,7 +20,11 @@ const (
 // Install registers the Windows Service, registers the Event Log source,
 // adds a firewall outbound allow rule, and starts the service.
 // Requires the process to be running as an Administrator.
-func Install(exePath string) error {
+//
+// Idempotent: if the service is already installed and opts.Force is false,
+// Install restarts the service to pick up any config changes. If opts.Force
+// is true the existing service is removed and reinstalled cleanly.
+func Install(exePath string, opts InstallOptions) error {
 	m, err := mgr.Connect()
 	if err != nil {
 		return fmt.Errorf("connecting to Service Control Manager (requires elevation): %w", err)
@@ -31,7 +35,14 @@ func Install(exePath string) error {
 	existing, err := m.OpenService(ServiceName)
 	if err == nil {
 		existing.Close()
-		return fmt.Errorf("service %q is already installed; run 'uninstall' first", ServiceName)
+		if !opts.Force {
+			// Config was already written by the caller (cmdInstall). Just restart.
+			return Restart()
+		}
+		// Force reinstall: remove the existing service first.
+		if err := Uninstall(); err != nil {
+			return fmt.Errorf("removing existing service for force reinstall: %w", err)
+		}
 	}
 
 	s, err := m.CreateService(ServiceName, exePath, mgr.Config{
@@ -70,6 +81,42 @@ func Install(exePath string) error {
 		return fmt.Errorf("starting service: %w", err)
 	}
 
+	return nil
+}
+
+// Restart stops and starts the Windows service.
+// Requires elevation.
+func Restart() error {
+	m, err := mgr.Connect()
+	if err != nil {
+		return fmt.Errorf("connecting to SCM: %w", err)
+	}
+	defer m.Disconnect()
+
+	s, err := m.OpenService(ServiceName)
+	if err != nil {
+		return fmt.Errorf("opening service: %w", err)
+	}
+	defer s.Close()
+
+	// Stop if running
+	status, err := s.Query()
+	if err == nil && status.State == svc.Running {
+		if _, err := s.Control(svc.Stop); err != nil {
+			return fmt.Errorf("stopping service: %w", err)
+		}
+		for i := 0; i < 20; i++ {
+			time.Sleep(500 * time.Millisecond)
+			st, err := s.Query()
+			if err != nil || st.State == svc.Stopped {
+				break
+			}
+		}
+	}
+
+	if err := s.Start(); err != nil {
+		return fmt.Errorf("starting service: %w", err)
+	}
 	return nil
 }
 

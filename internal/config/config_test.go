@@ -109,6 +109,64 @@ func TestAgentIDOmittedFromJSONWhenEmpty(t *testing.T) {
 	}
 }
 
+func TestLoadFromEnvSetsRegistrationKey(t *testing.T) {
+	t.Setenv("BESTDEFENSE_KEY", "env-test-key-123")
+	cfg := Default()
+	cfg.LoadFromEnv()
+	if cfg.RegistrationKey != "env-test-key-123" {
+		t.Errorf("RegistrationKey = %q, want %q", cfg.RegistrationKey, "env-test-key-123")
+	}
+}
+
+func TestLoadFromEnvSetsAllEndpointsFromHost(t *testing.T) {
+	t.Setenv("BESTDEFENSE_HOST", "https://acme.bestdefense.io")
+	cfg := Default()
+	cfg.LoadFromEnv()
+	if cfg.APIEndpoint != "https://acme.bestdefense.io/agent/checkin" {
+		t.Errorf("APIEndpoint = %q", cfg.APIEndpoint)
+	}
+	if cfg.CommandsEndpoint != "https://acme.bestdefense.io/agent/commands" {
+		t.Errorf("CommandsEndpoint = %q", cfg.CommandsEndpoint)
+	}
+	if cfg.TaskResultEndpoint != "https://acme.bestdefense.io/agent/task-result" {
+		t.Errorf("TaskResultEndpoint = %q", cfg.TaskResultEndpoint)
+	}
+	if cfg.RotateKeyEndpoint != "https://acme.bestdefense.io/agent/rotate-key" {
+		t.Errorf("RotateKeyEndpoint = %q", cfg.RotateKeyEndpoint)
+	}
+}
+
+func TestLoadFromEnvDoesNotOverwriteWithEmpty(t *testing.T) {
+	// Ensure env vars are not set
+	t.Setenv("BESTDEFENSE_KEY", "")
+	t.Setenv("BESTDEFENSE_HOST", "")
+	cfg := Default()
+	cfg.RegistrationKey = "original-key"
+	cfg.LoadFromEnv()
+	if cfg.RegistrationKey != "original-key" {
+		t.Errorf("LoadFromEnv overwrote RegistrationKey with empty env var; got %q", cfg.RegistrationKey)
+	}
+	if cfg.APIEndpoint != DefaultAPIEndpoint {
+		t.Errorf("LoadFromEnv changed APIEndpoint with empty BESTDEFENSE_HOST; got %q", cfg.APIEndpoint)
+	}
+}
+
+func TestEndpointsFromHostStripsTrailingSlash(t *testing.T) {
+	api, commands, taskResult, rotateKey := EndpointsFromHost("https://foo.bestdefense.io/")
+	if api != "https://foo.bestdefense.io/agent/checkin" {
+		t.Errorf("api = %q", api)
+	}
+	if commands != "https://foo.bestdefense.io/agent/commands" {
+		t.Errorf("commands = %q", commands)
+	}
+	if taskResult != "https://foo.bestdefense.io/agent/task-result" {
+		t.Errorf("taskResult = %q", taskResult)
+	}
+	if rotateKey != "https://foo.bestdefense.io/agent/rotate-key" {
+		t.Errorf("rotateKey = %q", rotateKey)
+	}
+}
+
 func TestLoadFillsMissingEndpointsFromDefaults(t *testing.T) {
 	withTempConfig(t)
 

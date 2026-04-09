@@ -32,7 +32,16 @@ WantedBy=multi-user.target
 
 // Install writes a systemd unit file and enables + starts the service.
 // Requires root (sudo).
-func Install(exePath string) error {
+//
+// Idempotent: if the unit file already exists and opts.Force is false, Install
+// restarts the service to pick up config changes without rewriting the unit.
+// If opts.Force is true the unit file is rewritten and the service restarted.
+func Install(exePath string, opts InstallOptions) error {
+	// Idempotent: already installed
+	if _, err := os.Stat(unitPath); err == nil && !opts.Force {
+		return Restart()
+	}
+
 	abs, err := filepath.Abs(exePath)
 	if err != nil {
 		return fmt.Errorf("resolving executable path: %w", err)
@@ -61,6 +70,15 @@ func Install(exePath string) error {
 		return fmt.Errorf("systemctl enable --now: %w: %s", err, strings.TrimSpace(string(out)))
 	}
 
+	return nil
+}
+
+// Restart restarts the systemd service so it picks up config changes.
+// Requires root (sudo).
+func Restart() error {
+	if out, err := exec.Command("systemctl", "restart", ServiceName).CombinedOutput(); err != nil {
+		return fmt.Errorf("systemctl restart: %w: %s", err, strings.TrimSpace(string(out)))
+	}
 	return nil
 }
 
