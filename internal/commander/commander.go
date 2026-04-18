@@ -2,8 +2,11 @@ package commander
 
 import (
 	"crypto/ed25519"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +18,10 @@ import (
 	"github.com/bestdefense/bestdefense-device-monitor/internal/serverkey"
 )
 
+// ErrTamperDetected is returned when a script's content does not match the
+// SHA-256 hash that was covered by the server's Ed25519 signature.
+var ErrTamperDetected = errors.New("script hash mismatch: tamper detected")
+
 // Task represents a single pending remediation command from the server.
 type Task struct {
 	ID          int             `json:"id"`
@@ -22,6 +29,18 @@ type Task struct {
 	Payload     json.RawMessage `json:"payload"`
 	IssuedAt    string          `json:"issued_at"`
 	Signature   string          `json:"signature"`
+}
+
+// ExecuteScriptPayload is the structured payload for "execute_script" commands.
+// ScriptHash is a hex-encoded SHA-256 digest of ScriptContent and is included
+// in the Ed25519 canonical message, so any tampering with the content is caught
+// by a second hash re-check after signature verification.
+type ExecuteScriptPayload struct {
+	ScriptContent  string `json:"script_content"`
+	ScriptHash     string `json:"script_hash"`
+	DryRun         bool   `json:"dry_run"`
+	DispatchID     int    `json:"dispatch_id"`
+	TimeoutSeconds int    `json:"timeout_seconds"`
 }
 
 // commandsResponse mirrors the JSON envelope returned by GET /agent/commands.
@@ -115,7 +134,19 @@ func (c *Commander) Poll() ([]Task, error) {
 }
 
 // verifyCommandSignature verifies the server's Ed25519 signature on a command.
-// Canonical message: "{id}|{command_type}|{issued_at_unix}"
+//
+// For most command types:
+//
+//	Canonical message: "{id}|{command_type}|{issued_at_unix}"
+//
+// For "execute_script" commands the message is extended with the script hash:
+//
+//	Canonical message: "{id}|execute_script|{issued_at_unix}|{script_sha256_hex}"
+//
+// After the signature check passes for execute_script, the function
+// re-computes SHA-256 of ScriptContent and compares it to ScriptHash.
+// A mismatch returns ErrTamperDetected.
+//
 // Returns nil on success, or an error describing the failure.
 func verifyCommandSignature(cmd Task) error {
 	if cmd.Signature == "" {
@@ -143,9 +174,38 @@ func verifyCommandSignature(cmd Task) error {
 		return fmt.Errorf("command is stale (issued %s)", cmd.IssuedAt)
 	}
 
+	if cmd.CommandType == "execute_script" {
+		return verifyExecuteScriptSignature(cmd, sigBytes, issuedAt)
+	}
+
 	msg := fmt.Sprintf("%d|%s|%d", cmd.ID, cmd.CommandType, issuedAt.Unix())
 	if !ed25519.Verify(serverkey.PublicKey(), []byte(msg), sigBytes) {
 		return fmt.Errorf("Ed25519 signature verification failed")
+	}
+
+	return nil
+}
+
+// verifyExecuteScriptSignature handles the extended canonical message and
+// content hash re-check for "execute_script" commands.
+func verifyExecuteScriptSignature(cmd Task, sigBytes []byte, issuedAt time.Time) error {
+	var p ExecuteScriptPayload
+	if err := json.Unmarshal(cmd.Payload, &p); err != nil {
+		return fmt.Errorf("unmarshal execute_script payload: %w", err)
+	}
+	if p.ScriptHash == "" {
+		return fmt.Errorf("execute_script payload missing script_hash")
+	}
+
+	msg := fmt.Sprintf("%d|execute_script|%d|%s", cmd.ID, issuedAt.Unix(), p.ScriptHash)
+	if !ed25519.Verify(serverkey.PublicKey(), []byte(msg), sigBytes) {
+		return fmt.Errorf("Ed25519 signature verification failed")
+	}
+
+	// Re-check: ensure the content matches the hash that was signed.
+	digest := sha256.Sum256([]byte(p.ScriptContent))
+	if hex.EncodeToString(digest[:]) != p.ScriptHash {
+		return ErrTamperDetected
 	}
 
 	return nil

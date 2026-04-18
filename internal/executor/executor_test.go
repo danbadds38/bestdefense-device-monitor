@@ -43,7 +43,7 @@ func TestRunReturnsOneResultPerTask(t *testing.T) {
 			{ID: 1, CommandType: "enable_firewall"},
 			{ID: 2, CommandType: "enable_firewall"},
 		}
-		results := Run(tasks, nil)
+		results, _ := Run(tasks, nil)
 		if len(results) != 2 {
 			t.Errorf("Run() returned %d results, want 2", len(results))
 		}
@@ -53,7 +53,7 @@ func TestRunReturnsOneResultPerTask(t *testing.T) {
 func TestRunSuccessStatus(t *testing.T) {
 	withFirewall(func() (string, error) { return "Firewall enabled.", nil }, func() {
 		tasks := []commander.Task{{ID: 5, CommandType: "enable_firewall"}}
-		results := Run(tasks, nil)
+		results, _ := Run(tasks, nil)
 		if results[0].Status != "success" {
 			t.Errorf("Status = %q, want %q", results[0].Status, "success")
 		}
@@ -69,7 +69,7 @@ func TestRunSuccessStatus(t *testing.T) {
 func TestRunFailedStatus(t *testing.T) {
 	withFirewall(func() (string, error) { return "", errors.New("ufw: command not found") }, func() {
 		tasks := []commander.Task{{ID: 9, CommandType: "enable_firewall"}}
-		results := Run(tasks, nil)
+		results, _ := Run(tasks, nil)
 		if results[0].Status != "failed" {
 			t.Errorf("Status = %q, want %q", results[0].Status, "failed")
 		}
@@ -96,7 +96,7 @@ func TestRunUnknownCommandTypeReturnsFailed(t *testing.T) {
 func TestRunSetsExecutedAt(t *testing.T) {
 	withFirewall(func() (string, error) { return "ok", nil }, func() {
 		tasks := []commander.Task{{ID: 1, CommandType: "enable_firewall"}}
-		results := Run(tasks, nil)
+		results, _ := Run(tasks, nil)
 		if results[0].ExecutedAt.IsZero() {
 			t.Error("ExecutedAt should not be zero")
 		}
@@ -113,7 +113,7 @@ func TestRunEmptyTasksReturnsEmptySlice(t *testing.T) {
 func TestRunEnableScreenLock(t *testing.T) {
 	withScreenLock(func() (string, error) { return "Screen lock enabled.", nil }, func() {
 		tasks := []commander.Task{{ID: 10, CommandType: "enable_screen_lock"}}
-		results := Run(tasks, nil)
+		results, _ := Run(tasks, nil)
 		if results[0].Status != "success" {
 			t.Errorf("Status = %q, want %q", results[0].Status, "success")
 		}
@@ -129,7 +129,7 @@ func TestRunEnableScreenLock(t *testing.T) {
 func TestRunEnableAutoUpdates(t *testing.T) {
 	withAutoUpdates(func() (string, error) { return "Auto updates enabled.", nil }, func() {
 		tasks := []commander.Task{{ID: 11, CommandType: "enable_auto_updates"}}
-		results := Run(tasks, nil)
+		results, _ := Run(tasks, nil)
 		if results[0].Status != "success" {
 			t.Errorf("Status = %q, want %q", results[0].Status, "success")
 		}
@@ -145,7 +145,7 @@ func TestRunEnableAutoUpdates(t *testing.T) {
 func TestRunRequestReboot(t *testing.T) {
 	withReboot(func() (string, error) { return "Reboot scheduled.", nil }, func() {
 		tasks := []commander.Task{{ID: 12, CommandType: "request_reboot"}}
-		results := Run(tasks, nil)
+		results, _ := Run(tasks, nil)
 		if results[0].Status != "success" {
 			t.Errorf("Status = %q, want %q", results[0].Status, "success")
 		}
@@ -195,7 +195,7 @@ func TestRunRotateKeysSuccess(t *testing.T) {
 	defer SetRotateKeysFunc(nil)
 
 	tasks := []commander.Task{{ID: 21, CommandType: "rotate_keys"}}
-	results := Run(tasks, oldKP)
+	results, _ := Run(tasks, oldKP)
 	if results[0].Status != "success" {
 		t.Errorf("Status = %q, want %q", results[0].Status, "success")
 	}
@@ -222,7 +222,7 @@ func TestRunRotateKeysFailure(t *testing.T) {
 	defer SetRotateKeysFunc(nil)
 
 	tasks := []commander.Task{{ID: 22, CommandType: "rotate_keys"}}
-	results := Run(tasks, kp)
+	results, _ := Run(tasks, kp)
 	if results[0].Status != "failed" {
 		t.Errorf("Status = %q, want %q", results[0].Status, "failed")
 	}

@@ -173,6 +173,76 @@ func TestPostSetsTimestampHeaderWhenKeyPairIsSet(t *testing.T) {
 	}
 }
 
+// TestPostSendsExecuteScriptFields verifies that execute_script-specific fields
+// (exit_code, dry_run_diff, dispatch_id, tamper_detected) are included in the
+// JSON body when they carry non-zero values.
+func TestPostSendsExecuteScriptFields(t *testing.T) {
+	var body map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, `{"success":true}`)
+	}))
+	defer srv.Close()
+
+	results := []executor.Result{{
+		TaskID:         10,
+		CommandType:    "execute_script",
+		Status:         "failed",
+		Output:         "",
+		DryRunDiff:     "would change firewall rules",
+		ExitCode:       1,
+		DispatchID:     42,
+		TamperDetected: true,
+		ExecutedAt:     time.Date(2026, 3, 27, 10, 0, 0, 0, time.UTC),
+	}}
+
+	p := NewWithClient(testConfig(srv.URL), srv.Client())
+	if err := p.Post(results); err != nil {
+		t.Fatalf("Post() error: %v", err)
+	}
+
+	if int(body["exit_code"].(float64)) != 1 {
+		t.Errorf("exit_code = %v, want 1", body["exit_code"])
+	}
+	if body["dry_run_diff"] != "would change firewall rules" {
+		t.Errorf("dry_run_diff = %v, want %q", body["dry_run_diff"], "would change firewall rules")
+	}
+	if int(body["dispatch_id"].(float64)) != 42 {
+		t.Errorf("dispatch_id = %v, want 42", body["dispatch_id"])
+	}
+	if body["tamper_detected"] != true {
+		t.Errorf("tamper_detected = %v, want true", body["tamper_detected"])
+	}
+}
+
+// TestPostOmitsExecuteScriptFieldsWhenZero verifies that zero-value
+// execute_script fields are omitted from the JSON body for non-script tasks.
+func TestPostOmitsExecuteScriptFieldsWhenZero(t *testing.T) {
+	var body map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, `{"success":true}`)
+	}))
+	defer srv.Close()
+
+	p := NewWithClient(testConfig(srv.URL), srv.Client())
+	if err := p.Post(singleResult()); err != nil {
+		t.Fatalf("Post() error: %v", err)
+	}
+
+	if _, ok := body["dispatch_id"]; ok {
+		t.Error("dispatch_id should be omitted when zero")
+	}
+	if _, ok := body["tamper_detected"]; ok {
+		t.Error("tamper_detected should be omitted when false")
+	}
+	if _, ok := body["dry_run_diff"]; ok {
+		t.Error("dry_run_diff should be omitted when empty")
+	}
+}
+
 // TestPostSetsSignatureHeaderWhenKeyPairIsSet verifies X-Signature is present when signing.
 func TestPostSetsSignatureHeaderWhenKeyPairIsSet(t *testing.T) {
 	t.Setenv("BESTDEFENSE_IDENTITY_PATH", t.TempDir()+"/test.key")

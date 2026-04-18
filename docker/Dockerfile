@@ -57,7 +57,7 @@ RUN GOOS=windows GOARCH=amd64 go vet ./... && \
 FROM build-env AS test
 
 # Test platform-agnostic packages natively on Linux
-RUN go test -v -count=1 ./internal/config/... ./internal/identity/... ./internal/httpsign/... ./internal/serverkey/... ./internal/reporter/... ./internal/commander/... ./internal/executor/... ./internal/keyrotation/... ./internal/taskresult/...
+RUN go test -v -count=1 ./internal/config/... ./internal/identity/... ./internal/httpsign/... ./internal/serverkey/... ./internal/reporter/... ./internal/commander/... ./internal/executor/... ./internal/keyrotation/... ./internal/taskresult/... ./internal/scriptexec/...
 
 # Cross-compile test binaries for all platforms (catches build-tag/type errors)
 RUN GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...   && \
@@ -70,6 +70,7 @@ RUN GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...  
     GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/executor/...    && \
     GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/keyrotation/... && \
     GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/taskresult/...  && \
+    GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/scriptexec/...  && \
     GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...   && \
     GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/identity/...    && \
     GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/httpsign/...   && \
@@ -80,6 +81,7 @@ RUN GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...  
     GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/executor/...    && \
     GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/keyrotation/... && \
     GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/taskresult/...  && \
+    GOOS=darwin  GOARCH=amd64 go test -c -o /dev/null ./internal/scriptexec/...  && \
     GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...   && \
     GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/identity/...    && \
     GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/httpsign/...   && \
@@ -90,6 +92,7 @@ RUN GOOS=windows GOARCH=amd64 go test -c -o /dev/null ./internal/collector/...  
     GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/executor/...    && \
     GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/keyrotation/... && \
     GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/taskresult/...  && \
+    GOOS=linux   GOARCH=amd64 go test -c -o /dev/null ./internal/scriptexec/...  && \
     echo "All packages compiled successfully for all platforms"
 
 # ── stage: package-base ─────────────────────────────────────────────────────────────────────────

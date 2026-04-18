@@ -1,11 +1,15 @@
 package executor
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/bestdefense/bestdefense-device-monitor/internal/commander"
 	"github.com/bestdefense/bestdefense-device-monitor/internal/identity"
+	"github.com/bestdefense/bestdefense-device-monitor/internal/scriptexec"
 )
 
 // The following vars are set by platform-specific init() functions.
@@ -32,19 +36,34 @@ type Result struct {
 	Status      string // "success" or "failed"
 	Output      string
 	ExecutedAt  time.Time
+
+	// Fields populated for execute_script tasks.
+	ExitCode       int    // process exit code; -1 on timeout
+	DryRunDiff     string // stdout when dry_run=true (Output is empty in that case)
+	DispatchID     int    // dispatch_id from the script payload
+	TamperDetected bool   // true when the content hash does not match the signed hash
 }
 
-// Run executes each task and returns one Result per task.
-// kp is the agent's current identity key pair. If a rotate_keys command succeeds,
-// *kp is updated in place so subsequent requests use the new private key.
+// Run executes each task and returns one Result per task, plus a shortPoll
+// flag that is true when at least one execute_script task was processed.
+// The service loop uses shortPoll to re-poll the server sooner (2 minutes
+// instead of the full check interval) so that dry-run or script results
+// are picked up quickly.
+//
+// kp is the agent's current identity key pair. If a rotate_keys command
+// succeeds, *kp is updated in place so subsequent requests use the new key.
 // Pass nil for kp if key rotation is not supported in this context.
 // Unknown command types produce a "failed" result without calling the OS.
-func Run(tasks []commander.Task, kp *identity.KeyPair) []Result {
+func Run(tasks []commander.Task, kp *identity.KeyPair) ([]Result, bool) {
 	results := make([]Result, 0, len(tasks))
+	shortPoll := false
 	for _, t := range tasks {
+		if t.CommandType == "execute_script" {
+			shortPoll = true
+		}
 		results = append(results, runTask(t, kp))
 	}
-	return results
+	return results, shortPoll
 }
 
 func runTask(t commander.Task, kp *identity.KeyPair) Result {
@@ -64,6 +83,8 @@ func runTask(t commander.Task, kp *identity.KeyPair) Result {
 		output, err = requestReboot()
 	case "rotate_keys":
 		return runRotateKeys(t, kp, start)
+	case "execute_script":
+		return handleExecuteScript(t, start)
 	default:
 		return Result{
 			TaskID:      t.ID,
@@ -119,6 +140,87 @@ func runRotateKeys(t commander.Task, kp *identity.KeyPair, start time.Time) Resu
 		CommandType: t.CommandType,
 		Status:      "success",
 		Output:      "Key rotation successful.",
+		ExecutedAt:  start,
+	}
+}
+
+// handleExecuteScript runs an execute_script task via scriptexec.Execute.
+// It performs a defense-in-depth content hash re-check before executing to
+// detect any in-memory tampering that bypassed the commander's signature check.
+func handleExecuteScript(t commander.Task, start time.Time) Result {
+	var p commander.ExecuteScriptPayload
+	if err := json.Unmarshal(t.Payload, &p); err != nil {
+		return Result{
+			TaskID:      t.ID,
+			CommandType: t.CommandType,
+			Status:      "failed",
+			Output:      fmt.Sprintf("invalid execute_script payload: %v", err),
+			ExecutedAt:  start,
+		}
+	}
+
+	// Defense-in-depth: re-verify content hash before execution.
+	digest := sha256.Sum256([]byte(p.ScriptContent))
+	if hex.EncodeToString(digest[:]) != p.ScriptHash {
+		return Result{
+			TaskID:         t.ID,
+			CommandType:    t.CommandType,
+			Status:         "failed",
+			Output:         "script hash mismatch: tamper detected",
+			TamperDetected: true,
+			DispatchID:     p.DispatchID,
+			ExecutedAt:     start,
+		}
+	}
+
+	timeout := time.Duration(p.TimeoutSeconds) * time.Second
+	if timeout <= 0 {
+		timeout = scriptexec.DefaultTimeout
+	}
+
+	res, err := scriptexec.Execute(p.ScriptContent, p.DryRun, timeout)
+	if err != nil {
+		return Result{
+			TaskID:      t.ID,
+			CommandType: t.CommandType,
+			Status:      "failed",
+			Output:      fmt.Sprintf("script execution error: %v", err),
+			DispatchID:  p.DispatchID,
+			ExecutedAt:  start,
+		}
+	}
+
+	status := "success"
+	if res.ExitCode != 0 || res.TimedOut {
+		status = "failed"
+	}
+
+	// Combine stdout and stderr into a single output string.
+	combined := res.Stdout
+	if res.Stderr != "" {
+		if combined != "" {
+			combined += "\n"
+		}
+		combined += res.Stderr
+	}
+
+	// For dry-run, the output goes in DryRunDiff; Output is left empty so the
+	// server can distinguish dry-run previews from actual execution output.
+	var output, dryRunDiff string
+	if p.DryRun {
+		dryRunDiff = combined
+	} else {
+		output = combined
+	}
+
+	return Result{
+		TaskID:      t.ID,
+		CommandType: t.CommandType,
+		Status:      status,
+		Output:      output,
+		DryRunDiff:  dryRunDiff,
+		ExitCode:    res.ExitCode,
+		DispatchID:  p.DispatchID,
 		ExecutedAt:  start,
 	}
 }

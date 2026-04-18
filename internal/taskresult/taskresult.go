@@ -45,6 +45,12 @@ type resultPayload struct {
 	Status     string `json:"status"`
 	Output     string `json:"output"`
 	ExecutedAt string `json:"executed_at"`
+
+	// Fields populated for execute_script tasks (omitted for other command types).
+	ExitCode       int    `json:"exit_code,omitempty"`
+	DryRunDiff     string `json:"dry_run_diff,omitempty"`
+	DispatchID     int    `json:"dispatch_id,omitempty"`
+	TamperDetected bool   `json:"tamper_detected,omitempty"`
 }
 
 // Post sends each result to the server individually.
@@ -70,10 +76,14 @@ func (p *Poster) Post(results []executor.Result) error {
 
 func (p *Poster) postOne(r executor.Result) error {
 	payload := resultPayload{
-		TaskID:     r.TaskID,
-		Status:     r.Status,
-		Output:     r.Output,
-		ExecutedAt: r.ExecutedAt.Format(time.RFC3339),
+		TaskID:         r.TaskID,
+		Status:         r.Status,
+		Output:         r.Output,
+		ExecutedAt:     r.ExecutedAt.Format(time.RFC3339),
+		ExitCode:       r.ExitCode,
+		DryRunDiff:     r.DryRunDiff,
+		DispatchID:     r.DispatchID,
+		TamperDetected: r.TamperDetected,
 	}
 
 	body, err := json.Marshal(payload)

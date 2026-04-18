@@ -20,6 +20,10 @@ import (
 	"github.com/bestdefense/bestdefense-device-monitor/internal/taskresult"
 )
 
+// shortPollInterval is the re-poll delay used after an execute_script task.
+// It lets the server pick up dry-run results quickly before the next full check.
+const shortPollInterval = 2 * time.Minute
+
 // ServiceName is the launchd label used for this agent.
 const ServiceName = "io.bestdefense.monitor"
 
@@ -64,12 +68,19 @@ func (h *Handler) Run() {
 
 	executor.SetRotateKeysFunc(keyrotation.New(cfg).Rotate)
 
-	h.runCheck(cfg, kp)
+	if sp := h.runCheck(cfg, kp); sp {
+		ticker.Reset(shortPollInterval)
+	}
 
 	for {
 		select {
 		case <-ticker.C:
-			h.runCheck(cfg, kp)
+			if sp := h.runCheck(cfg, kp); sp {
+				h.log.Info(fmt.Sprintf("execute_script task processed; re-polling in %.0fs", shortPollInterval.Seconds()))
+				ticker.Reset(shortPollInterval)
+			} else {
+				ticker.Reset(interval)
+			}
 		case sig := <-sigs:
 			h.log.Info(fmt.Sprintf("Received signal %s, stopping", sig))
 			return
@@ -77,7 +88,9 @@ func (h *Handler) Run() {
 	}
 }
 
-func (h *Handler) runCheck(cfg *config.Config, kp *identity.KeyPair) {
+// runCheck performs one collection + report + command poll cycle.
+// Returns true if at least one execute_script task was processed (shortPoll).
+func (h *Handler) runCheck(cfg *config.Config, kp *identity.KeyPair) bool {
 	h.log.Info("Starting device check")
 	start := time.Now()
 
@@ -90,9 +103,10 @@ func (h *Handler) runCheck(cfg *config.Config, kp *identity.KeyPair) {
 	r := reporter.New(cfg).WithKeyPair(kp)
 	if err := r.Send(report); err != nil {
 		h.log.Error(fmt.Sprintf("Failed to send report: %v", err))
-		return
+		return false
 	}
 
+	shortPoll := false
 	cmdr := commander.New(cfg).WithKeyPair(kp)
 	tasks, err := cmdr.Poll()
 	if err != nil {
@@ -100,7 +114,8 @@ func (h *Handler) runCheck(cfg *config.Config, kp *identity.KeyPair) {
 	} else {
 		h.log.Info(fmt.Sprintf("Polled %d pending command(s)", len(tasks)))
 		if len(tasks) > 0 {
-			results := executor.Run(tasks, kp)
+			results, sp := executor.Run(tasks, kp)
+			shortPoll = sp
 			poster := taskresult.New(cfg).WithKeyPair(kp)
 			if err := poster.Post(results); err != nil {
 				h.log.Warning(fmt.Sprintf("Failed to post task results: %v", err))
@@ -113,4 +128,5 @@ func (h *Handler) runCheck(cfg *config.Config, kp *identity.KeyPair) {
 		report.InstalledApps.TotalCount,
 		len(report.CheckErrors),
 	))
+	return shortPoll
 }
