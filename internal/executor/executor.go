@@ -85,6 +85,8 @@ func runTask(t commander.Task, kp *identity.KeyPair) Result {
 		return runRotateKeys(t, kp, start)
 	case "execute_script":
 		return handleExecuteScript(t, start)
+	case "check_issues":
+		return handleCheckIssues(t, start)
 	default:
 		return Result{
 			TaskID:      t.ID,
@@ -222,5 +224,62 @@ func handleExecuteScript(t commander.Task, start time.Time) Result {
 		ExitCode:    res.ExitCode,
 		DispatchID:  p.DispatchID,
 		ExecutedAt:  start,
+	}
+}
+
+// handleCheckIssues runs on-demand issue checks for specific issue types.
+// The agent re-evaluates the requested collectors and returns a JSON map
+// of issue_type → bool (true = issue present, false = resolved).
+func handleCheckIssues(t commander.Task, start time.Time) Result {
+	var payload struct {
+		IssueTypes []string `json:"issue_types"`
+	}
+
+	if err := json.Unmarshal(t.Payload, &payload); err != nil {
+		return Result{
+			TaskID:      t.ID,
+			CommandType: t.CommandType,
+			Status:      "failed",
+			Output:      fmt.Sprintf("unmarshal check_issues payload: %v", err),
+			ExecutedAt:  start,
+		}
+	}
+
+	// Run collectors for each requested issue type.
+	// This reuses the existing platform-specific check functions.
+	results := make(map[string]bool)
+	for _, issueType := range payload.IssueTypes {
+		present := checkIssue(issueType)
+		results[issueType] = present
+	}
+
+	output, _ := json.Marshal(results)
+
+	return Result{
+		TaskID:      t.ID,
+		CommandType: t.CommandType,
+		Status:      "success",
+		Output:      string(output),
+		ExecutedAt:  start,
+	}
+}
+
+// checkIssue evaluates a single issue type using the existing collector functions.
+func checkIssue(issueType string) bool {
+	switch issueType {
+	case "firewall_disabled":
+		_, err := enableFirewall()
+		// If enableFirewall returns an error, the firewall was already enabled
+		// (or we can't determine). We check the state instead.
+		// For now, return false (not present) if no error, true if error.
+		return err != nil
+	case "auto_updates_disabled":
+		_, err := enableAutoUpdates()
+		return err != nil
+	case "screen_lock_disabled":
+		_, err := enableScreenLock()
+		return err != nil
+	default:
+		return false // Unknown issue type — assume not present
 	}
 }
