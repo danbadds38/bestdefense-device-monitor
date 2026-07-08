@@ -24,6 +24,14 @@ func collectIdentity() (result reporter.DeviceIdentity) {
 			result.HardwareUUID = strings.TrimSpace(string(data))
 		}
 
+		// DMI is absent on containers, WSL, and some VMs — fall back to the
+		// systemd machine id so the device can still enroll with a stable UUID.
+		if result.HardwareUUID == "" {
+			if data, err := os.ReadFile("/etc/machine-id"); err == nil {
+				result.HardwareUUID = strings.TrimSpace(string(data))
+			}
+		}
+
 		// Serial number from DMI
 		if data, err := os.ReadFile("/sys/class/dmi/id/product_serial"); err == nil {
 			serial := strings.TrimSpace(string(data))
